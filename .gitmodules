@@ -2,5 +2,8 @@
 	path = adecc_Scholar
 	url = https://github.com/adeccscholar/adecc_Scholar.git
 [submodule "Database"]
-	path = Database
+	path = adecc_Database
 	url = https://github.com/adeccscholar/adecc_Scholar_Database.git
+[submodule "adecc_Tools"]
+	path = adecc_Tools
+	url = https://github.com/adeccscholar/adecc_Scholar_Tools.git

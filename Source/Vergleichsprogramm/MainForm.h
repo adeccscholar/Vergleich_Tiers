@@ -16,6 +16,6 @@ public:
 
 private:
     Ui::MainFormClass ui;
-    TProcess_Impl_Qt<TMyMSSQL> proc;
+    TProcess_Impl_Qt proc;
     QLabel* statusLabel;
 };

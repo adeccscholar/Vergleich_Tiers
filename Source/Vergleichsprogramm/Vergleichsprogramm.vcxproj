@@ -122,6 +122,7 @@
     <ClInclude Include="..\Processes\BusinessOperations.h" />
     <ClInclude Include="..\Processes\Presenter_Process.h" />
     <ClInclude Include="..\Processes\Process.h" />
+    <ClInclude Include="..\Processes\Process_Impl.h" />
     <ClInclude Include="..\Processes\Reader_Process.h" />
     <ClInclude Include="Presenter_Process_Impl_Qt.h" />
     <ClInclude Include="Process_Impl_Qt.h" />

@@ -99,8 +99,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <QtRcc Include="MainForm.qrc" />
+    <QtUic Include="..\Presenter\UserDlg.ui" />
     <QtUic Include="MainForm.ui" />
     <QtMoc Include="MainForm.h" />
+    <ClCompile Include="..\Persistance\Reader_Process_Impl.cpp" />
+    <ClCompile Include="..\Presenter\Presenter_Process_Impl.cpp" />
+    <ClCompile Include="..\Presenter\UserDlg.cpp" />
+    <ClCompile Include="..\Processes\Process.cpp" />
     <ClCompile Include="MainForm.cpp" />
     <ClCompile Include="main.cpp" />
     <None Include="Vergleichsprogramm.ico" />
@@ -112,6 +117,9 @@
     <ClInclude Include="..\..\adecc_Database\adecc_Database\MyDatabaseDefinitions.h" />
     <ClInclude Include="..\..\adecc_Database\adecc_Database\MyDatabaseExceptions.h" />
     <ClInclude Include="..\Persistance\Reader_Process_Impl.h" />
+    <ClInclude Include="..\Presenter\Presenter_Process_Impl.h" />
+    <QtMoc Include="..\Presenter\UserDlg.h" />
+    <ClInclude Include="..\Processes\BusinessOperations.h" />
     <ClInclude Include="..\Processes\Presenter_Process.h" />
     <ClInclude Include="..\Processes\Process.h" />
     <ClInclude Include="..\Processes\Process_Impl.h" />

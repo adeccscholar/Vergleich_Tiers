@@ -2,39 +2,25 @@
 
 #include "Presenter_Process.h"
 #include "Reader_Process.h"
+#include "adecc_Tools/MyExceptions.h"
+#include "BusinessOperations.h"
+#include <string>
+#include <tuple>
 
-/**
- * \brief Interface für die eigentlichen Geschäftsvorfälle, die der Klasse TProcess mit Hilfe der Teilprozesse verarbeitet werden
-*/
-class TBusinessOperations {
+
+class TProcess : virtual public TBusinessOperations, virtual public TProcess_Presenter, virtual public TProcess_Reader {
 	public:
-	   TBusinessOperations(void) = default;
-	   TBusinessOperations(TBusinessOperations const&) = default;
-	   virtual ~TBusinessOperations(void) = default;
+		TProcess(void);
+		TProcess(TProcess const& ref);
+		TProcess(TProcess&& ref) noexcept;
 
-		void swap(TBusinessOperations& ref) noexcept { }
-		void copy(TBusinessOperations const& ref) { }
-   };
-
-
-
-template <my_db_credentials credential_ty>
-class TProcess : virtual public TBusinessOperations, virtual public TProcess_Presenter, virtual public TProcess_Reader<credential_ty> {
-	public:
-	   TProcess() : TBusinessOperations(), TProcess_Presenter(), TProcess_Reader<credential_ty>() { }
-	   TProcess(TProcess const& ref) : TBusinessOperations(ref), TProcess_Presenter(ref), TProcess_Reader<credential_ty>(ref) { }
-	   
 	   virtual ~TProcess() { }
 	   
-		void swap(TProcess& ref) noexcept {
-			TBusinessOperations::swap(static_cast<TBusinessOperations&>(ref));
-			TProcess_Presenter::swap(static_cast<TProcess_Presenter&>(ref));
-			TProcess_Reader::swap(static_cast<TProcess_Reader&>(ref));
-		   }
+		void swap(TProcess& ref) noexcept;
+		void copy(TProcess const& ref);
 
-		void copy(TProcess const& ref) { 
-			TBusinessOperations::copy(static_cast<TBusinessOperations const&>(ref));
-			TProcess_Presenter::copy(static_cast<TProcess_Presenter const&>(ref));
-			TProcess_Reader::copy(static_cast<TProcess_Reader const&>(ref));
-		   }
-};
+		virtual void Login(void) override;
+
+
+	
+   };

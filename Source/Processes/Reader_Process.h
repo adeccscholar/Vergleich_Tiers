@@ -1,14 +1,10 @@
 #pragma once
 
 #include <string>
+#include <utility>
 #include "adecc_Database/MyDatabaseCredentials.h"
 
-template <my_db_credentials credential_ty>
 class TProcess_Reader {
-   public:
-      using db_credentials = credential_ty;
-   protected:
-      db_credentials credentials;
    public:
 
       TProcess_Reader() = default;
@@ -22,15 +18,15 @@ class TProcess_Reader {
       TProcess_Reader& operator = (TProcess_Reader&&) noexcept = default;
 
       void swap(TProcess_Reader& ref) noexcept {
-         swap(credentials, ref.credentials);
          }
 
       void copy(TProcess_Reader const& ref) {
-         credentials = ref.credentials;
          }
 
       // Bereich mit den Teilprozessen
-
+      virtual bool GetServerHasIntegratedSecurity() = 0;
+      virtual std::pair<std::string, std::string> GetServerInformations() = 0;
+      virtual std::pair<bool, std::string> LoginToDb(TMyCredential&&) = 0;
       virtual void ReadBerlinFromFile(std::string const&) = 0;
 
 };

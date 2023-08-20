@@ -6,13 +6,11 @@
 
 class TProcess_Reader {
    public:
-
       TProcess_Reader() = default;
       TProcess_Reader(TProcess_Reader const& ref) { copy(ref); }
-      
       TProcess_Reader(TProcess_Reader&& ref) noexcept { swap(ref); }
 
-     virtual ~TProcess_Reader() = default;
+      virtual ~TProcess_Reader() = default;
 
       TProcess_Reader& operator = (TProcess_Reader const&) = default;
       TProcess_Reader& operator = (TProcess_Reader&&) noexcept = default;
@@ -25,8 +23,10 @@ class TProcess_Reader {
 
       // Bereich mit den Teilprozessen
       virtual bool GetServerHasIntegratedSecurity() = 0;
-      virtual std::pair<std::string, std::string> GetServerInformations() = 0;
+      virtual std::pair<std::string, std::string> GetConnectionInformations() = 0;
       virtual std::pair<bool, std::string> LoginToDb(TMyCredential&&) = 0;
+
+
       virtual void ReadBerlinFromFile(std::string const&) = 0;
 
 };

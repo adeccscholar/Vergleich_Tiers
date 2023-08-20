@@ -19,6 +19,7 @@ class TProcess : virtual public TBusinessOperations, virtual public TProcess_Pre
 		void swap(TProcess& ref) noexcept;
 		void copy(TProcess const& ref);
 
+		void Init(TMyForm&&) override;
 		virtual void Login(void) override;
 
 

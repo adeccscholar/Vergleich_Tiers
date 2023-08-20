@@ -17,9 +17,9 @@ class TProcess_Reader_Impl : virtual public TProcess_Reader {
 		TProcess_Reader_Impl();
 	   TProcess_Reader_Impl(TProcess_Reader_Impl const& ref) : TProcess_Reader(ref) { db = ref.db; }
 	
-	virtual bool GetServerHasIntegratedSecurity(void) override;
-	virtual std::pair<std::string, std::string> GetServerInformations(void) override;
-	virtual std::pair<bool, std::string> LoginToDb(TMyCredential&& credentials) override;
-	virtual void ReadBerlinFromFile(std::string const& strFile) override { };
+	   virtual bool GetServerHasIntegratedSecurity(void) override;
+	   virtual std::pair<std::string, std::string> GetConnectionInformations(void) override;
+	   virtual std::pair<bool, std::string> LoginToDb(TMyCredential&& credentials) override;
+	   virtual void ReadBerlinFromFile(std::string const& strFile) override { };
    };
 

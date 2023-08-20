@@ -8,19 +8,24 @@
 
 
 class  TProcess_Presenter_Impl : virtual public TProcess_Presenter {
-   private:
-     TMyForm frm;  /// Hauptfester der Anwendung, wird in InitMainForm übernommen
-     std::locale myLoc;
-   public:
-      TProcess_Presenter_Impl(void) : TProcess_Presenter() { }
-      TProcess_Presenter_Impl(TProcess_Presenter_Impl const& ref) : TProcess_Presenter(ref) { }
-      virtual ~TProcess_Presenter_Impl() { }
+private:
+   TMyForm frm;  /// Hauptfester der Anwendung, wird in InitMainForm übernommen
+   std::locale myLoc;
 
-      virtual void InitMainForm(TMyForm&& frm) override;
-      virtual void SetMainFormCaption(std::string const&) override;
-      virtual login_return LoginForm(std::string const& server, bool hasintegrated, bool integrated, std::string const& user) override;
-      virtual void ShowErrorForm(std::string const& caption, std::string const message) override;
-      virtual void ShowInformationForm(std::string const& caption, std::string const message) override;
-   private:
-      TMyForm CreateLoginForm(TMyForm& parent);  // diese Methode abstrakt machen, um Qt spezifische Teile zu trennen
-   };
+   static inline TStreamWrapper<Narrow> old_cout{ std::cout };
+   static inline TStreamWrapper<Narrow> old_cerr{ std::cerr };
+   static inline TStreamWrapper<Narrow> old_clog{ std::clog };
+
+public:
+   TProcess_Presenter_Impl(void) : TProcess_Presenter() { }
+   TProcess_Presenter_Impl(TProcess_Presenter_Impl const& ref) : TProcess_Presenter(ref) { }
+   virtual ~TProcess_Presenter_Impl() { }
+
+   virtual void InitMainForm(TMyForm&& frm, std::string const& strCaption) override;
+   virtual void SetMainFormCaption(std::string const&) override;
+   virtual login_return LoginForm(std::string const& server, bool hasintegrated, bool integrated, std::string const& user) override;
+   virtual void ShowErrorForm(std::string const& caption, std::string const message) override;
+   virtual void ShowInformationForm(std::string const& caption, std::string const message) override;
+private:
+   virtual TMyForm CreateLoginForm(TMyForm& parent) = 0;
+};

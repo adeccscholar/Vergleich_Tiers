@@ -2,6 +2,8 @@
 
 #include <string>
 
+class TMyForm;
+
 /**
  * \brief Interface für die eigentlichen Geschäftsvorfälle, die der Klasse TProcess mit Hilfe der Teilprozesse verarbeitet werden
 */
@@ -17,5 +19,6 @@ class TBusinessOperations {
 		void swap(TBusinessOperations& ref) noexcept { std::swap(strApplication, ref.strApplication);  }
 		void copy(TBusinessOperations const& ref) { strApplication = ref.strApplication; }
 
+		virtual void Init(TMyForm&&) = 0;
 		virtual void Login(void) = 0;
    };

@@ -22,7 +22,7 @@ class TProcess_Presenter {
       void copy(TProcess_Presenter const& ref) { }
 
       //
-      virtual void InitMainForm(TMyForm&&) = 0;
+      virtual void InitMainForm(TMyForm&&, std::string const& strCaption) = 0;
       virtual void SetMainFormCaption(std::string const&) = 0;
       virtual login_return LoginForm(std::string const& server, bool hasintegrated, bool integrated, std::string const& user) = 0;
 

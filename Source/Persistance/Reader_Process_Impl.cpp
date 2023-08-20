@@ -1,6 +1,7 @@
 #include "Reader_Process_Impl.h"
 #include <adecc_Database/MyDatabaseExceptions.h>
 
+
 template <my_db_credentials ty>
 ty CreateTest(void) {
    if constexpr (std::is_same<ty, TMyMSSQL>::value) {
@@ -40,7 +41,7 @@ bool TProcess_Reader_Impl::GetServerHasIntegratedSecurity(void) {
    return db.HasIntegratedSecurity();
    }
 
-std::pair<std::string, std::string> TProcess_Reader_Impl::GetServerInformations(void) {
+std::pair<std::string, std::string> TProcess_Reader_Impl::GetConnectionInformations(void) {
    return { db.GetDatabase(), db.ServerType() };
    }
 

@@ -98,17 +98,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Presenter_Process_Impl_Qt.cpp" />
+    <ClCompile Include="UserDlg.cpp" />
     <QtRcc Include="MainForm.qrc" />
-    <QtUic Include="..\Presenter\UserDlg.ui" />
     <QtUic Include="MainForm.ui" />
     <QtMoc Include="MainForm.h" />
     <ClCompile Include="..\Persistance\Reader_Process_Impl.cpp" />
     <ClCompile Include="..\Presenter\Presenter_Process_Impl.cpp" />
-    <ClCompile Include="..\Presenter\UserDlg.cpp" />
     <ClCompile Include="..\Processes\Process.cpp" />
     <ClCompile Include="MainForm.cpp" />
     <ClCompile Include="main.cpp" />
     <None Include="Vergleichsprogramm.ico" />
+    <QtUic Include="UserDlg.ui" />
     <ResourceCompile Include="Vergleichsprogramm.rc" />
   </ItemGroup>
   <ItemGroup>
@@ -118,12 +119,13 @@
     <ClInclude Include="..\..\adecc_Database\adecc_Database\MyDatabaseExceptions.h" />
     <ClInclude Include="..\Persistance\Reader_Process_Impl.h" />
     <ClInclude Include="..\Presenter\Presenter_Process_Impl.h" />
-    <QtMoc Include="..\Presenter\UserDlg.h" />
     <ClInclude Include="..\Processes\BusinessOperations.h" />
     <ClInclude Include="..\Processes\Presenter_Process.h" />
     <ClInclude Include="..\Processes\Process.h" />
-    <ClInclude Include="..\Processes\Process_Impl.h" />
     <ClInclude Include="..\Processes\Reader_Process.h" />
+    <ClInclude Include="Presenter_Process_Impl_Qt.h" />
+    <ClInclude Include="Process_Impl_Qt.h" />
+    <QtMoc Include="UserDlg.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

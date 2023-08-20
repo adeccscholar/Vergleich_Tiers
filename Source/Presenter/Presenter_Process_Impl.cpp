@@ -1,9 +1,19 @@
 ﻿#include "Presenter_Process_Impl.h"
 
-#include "UserDlg.h"
-
 #include <adecc_Tools/MyExceptions.h>
 #include <format>
+
+std::vector<tplList<Narrow>> Berlin_Districts_Columns{
+      tplList<Narrow> { "District",  190, EMyAlignmentType::left   },
+      tplList<Narrow> { "Abbr.",      60, EMyAlignmentType::left   },
+      tplList<Narrow> { "Code",       70, EMyAlignmentType::center },
+      tplList<Narrow> { "City hall", 210, EMyAlignmentType::left   },
+      tplList<Narrow> { "Zipcode",    70, EMyAlignmentType::left   },
+      tplList<Narrow> { "City",      150, EMyAlignmentType::left   },
+      tplList<Narrow> { "Street",    180, EMyAlignmentType::left   },
+      tplList<Narrow> { "latitude",   80, EMyAlignmentType::right  },
+      tplList<Narrow> { "longitude",  80, EMyAlignmentType::right  }
+   };
 
 /// Struktur zur Steuerung der Ausgabe
 /// \todo später verschieben in zentrale Bibliothek
@@ -15,18 +25,39 @@ struct TMyNum : public std::numpunct<char> {
    std::string do_grouping()      const { return "\3"; }
 };
 
-void TProcess_Presenter_Impl::InitMainForm(TMyForm&& form) {
+TMyNum newNumPunct;
+
+
+
+void TProcess_Presenter_Impl::InitMainForm(TMyForm&& form, std::string const& strCaption) {
    frm.swap(form);
-   frm.SetCaption("Testanwendung Schichten ...");
+   try {
+      std::ios_base::sync_with_stdio(false);
+      myLoc = std::locale(std::locale("de_DE"), &newNumPunct);
+      std::locale::global(myLoc);
+      for (auto& s : { &std::cout, &std::cerr, &std::clog }) {
+         s->imbue(myLoc);
+         s->setf(std::ios::fixed);
+         }
+
+      frm.SetCaption(strCaption);
+      frm.GetAsStream<Narrow, EMyFrameworkType::listview>(old_cout, "tblOutput", Berlin_Districts_Columns);
+      frm.GetAsStream<Narrow, EMyFrameworkType::memo>(old_cerr, "textError");
+      frm.GetAsStream<Narrow, EMyFrameworkType::statusbar>(old_clog, "sbMain");
+
+      frm.Set<EMyFrameworkType::button, std::string>("btnLogin"s, "login ...");
+      frm.Enable<EMyFrameworkType::button>("btnLogin"s, true);
+      } 
+   catch (std::exception& ex) {
+      frm.Message(EMyMessageType::information, "error while prepare application", ex.what());
+      }
+   std::clog << "application is successful started and ready\n";
    }
 
 void TProcess_Presenter_Impl::SetMainFormCaption(std::string const& strCaption) {
    frm.SetCaption(strCaption);
    }
 
-TMyForm TProcess_Presenter_Impl::CreateLoginForm(TMyForm& parent) {
-   return TMyForm(new UserDlg(parent.Form()), true);
-   }
 
 TProcess_Presenter_Impl::login_return TProcess_Presenter_Impl::LoginForm(std::string const& server, bool hasintegrated,
                                                                      bool integrated, std::string const& user) {

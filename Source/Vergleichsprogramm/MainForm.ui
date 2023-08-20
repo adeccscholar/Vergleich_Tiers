@@ -26,7 +26,7 @@
       <property name="orientation">
        <enum>Qt::Vertical</enum>
       </property>
-      <widget class="QTableWidget" name="tableWidget">
+      <widget class="QTableWidget" name="tblOutput">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
          <horstretch>0</horstretch>
@@ -34,7 +34,7 @@
         </sizepolicy>
        </property>
       </widget>
-      <widget class="QTextEdit" name="textEdit"/>
+      <widget class="QTextEdit" name="textError"/>
      </widget>
     </item>
     <item>
@@ -53,7 +53,7 @@
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
-        <widget class="QPushButton" name="pushButton">
+        <widget class="QPushButton" name="btnLogin">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -61,7 +61,7 @@
           </sizepolicy>
          </property>
          <property name="text">
-          <string>PushButton</string>
+          <string>btnLogin</string>
          </property>
         </widget>
        </item>

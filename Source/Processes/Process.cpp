@@ -28,14 +28,17 @@ void TProcess::copy(TProcess const& ref) {
 	strApplication = ref.strApplication;
    }
 
+void TProcess::Init(TMyForm&& form) {
+	InitMainForm(std::forward<TMyForm>(form), std::format("application \"{}\" not connected ...", strApplication));
+   }
 
 void TProcess::Login(void) {
-	auto [strDatabase, strServerType] = GetServerInformations();
+	auto [strDatabase, strServerType] = GetConnectionInformations();
 	std::string strTheme = std::format("connecting to database {} / {}", strDatabase, strServerType);
 	TMyWait wait;
 	try {
 		auto [usr, pwd, isec] = LoginForm(strTheme, GetServerHasIntegratedSecurity(), false, "");
-		auto [ret, msg] = LoginToDb(TMyCredential{ usr, pwd, GetServerHasIntegratedSecurity() && isec });
+		auto [ret, msg] = LoginToDb( { usr, pwd, GetServerHasIntegratedSecurity() && isec } );
 		if (ret) {
 			ShowInformationForm(strTheme, msg);
 			SetMainFormCaption(std::format("application \"{}\" connected to {} / {} ...", strApplication, strDatabase, strServerType));

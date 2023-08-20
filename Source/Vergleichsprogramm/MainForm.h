@@ -1,9 +1,10 @@
 #pragma once
 
 #include <QtWidgets/QMainWindow>
+#include <QLabel>
 #include "ui_MainForm.h"
 
-#include "Processes/Process_Impl.h"
+#include "Process_Impl_Qt.h"
 
 class MainForm : public QMainWindow
 {
@@ -15,5 +16,6 @@ public:
 
 private:
     Ui::MainFormClass ui;
-    TProcess_Impl<TMyMSSQL> proc;
+    TProcess_Impl_Qt<TMyMSSQL> proc;
+    QLabel* statusLabel;
 };

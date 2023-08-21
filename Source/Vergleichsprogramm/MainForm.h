@@ -14,6 +14,8 @@ public:
     MainForm(QWidget *parent = nullptr);
     ~MainForm();
 
+    TBusinessOperations&       processes() { return proc;  }
+    TBusinessOperations const& processes() const { return proc; }
 private:
     Ui::MainFormClass ui;
     TProcess_Impl_Qt proc;

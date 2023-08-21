@@ -13,9 +13,9 @@ MainForm::MainForm(QWidget *parent)
     statusLabel->setText("sbMain");
     ui.statusBar->addPermanentWidget(statusLabel);
 
-    connect(ui.btnLogin, &QPushButton::clicked, this, [this]() { proc.Login(); });
+    connect(ui.btnLogin, &QPushButton::clicked, this, [this]() { processes().Login(); });
 
-    proc.Init(TMyForm(this, false));
+    processes().Init(TMyForm(this, false));
 }
 
 MainForm::~MainForm()

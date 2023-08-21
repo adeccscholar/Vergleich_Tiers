@@ -63,6 +63,15 @@
     <Filter Include="adecc Scholar">
       <UniqueIdentifier>{ff0425a8-e596-4f6e-9641-24dfbe0db204}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Process - Migration">
+      <UniqueIdentifier>{cb7d1d1d-e89e-489a-9700-7e1d5fa5e4c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Process - Migration\Header Files">
+      <UniqueIdentifier>{726d027f-f808-44e7-95bf-958a3a1b9cee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Process - Migration\Source Files">
+      <UniqueIdentifier>{7ba06480-baad-4e85-84c0-72852000b3eb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="MainForm.qrc">
@@ -105,6 +114,9 @@
     </ClCompile>
     <ClCompile Include="..\Processes\BusinessOperations.cpp">
       <Filter>Processes\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Migration\Migration_Process_Impl.cpp">
+      <Filter>Process - Migration\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -158,6 +170,12 @@
     </ClInclude>
     <ClInclude Include="..\..\adecc_Scholar\adecc_Scholar\MyStream.h">
       <Filter>adecc Scholar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Processes\Migration_Process.h">
+      <Filter>Processes\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Migration\Migration_Process_Impl.h">
+      <Filter>Process - Migration\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

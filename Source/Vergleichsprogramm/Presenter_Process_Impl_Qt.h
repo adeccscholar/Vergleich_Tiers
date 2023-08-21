@@ -12,6 +12,8 @@ public:
 
 private:
    virtual TMyForm CreateLoginForm(TMyForm& parent);
+
+   void Check() { delete new TProcess_Presenter_Impl_Qt;  }
 };
 
 

@@ -2,7 +2,8 @@
 
 #include <string>
 #include <utility>
-#include "adecc_Database/MyDatabaseCredentials.h"
+
+class TMyCredential;
 
 class TProcess_Reader {
    public:
@@ -12,10 +13,7 @@ class TProcess_Reader {
 
       virtual ~TProcess_Reader() = default;
 
-      TProcess_Reader& operator = (TProcess_Reader const&) = default;
-      TProcess_Reader& operator = (TProcess_Reader&&) noexcept = default;
-
-      void swap(TProcess_Reader& ref) noexcept {
+       void swap(TProcess_Reader& ref) noexcept {
          }
 
       void copy(TProcess_Reader const& ref) {
@@ -27,6 +25,6 @@ class TProcess_Reader {
       virtual std::pair<bool, std::string> LoginToDb(TMyCredential&&) = 0;
 
 
-      virtual void ReadBerlinFromFile(std::string const&) = 0;
+      //virtual void ReadBerlinFromFile(std::string const&) = 0;
 
 };

@@ -1,6 +1,9 @@
 #pragma once
 
-#include "adecc_Scholar/MyForm.h"
+#include <string>
+#include <tuple>
+
+class TMyForm;
 
 /**
   \brief Klasse mit den Teilprozessen mit den aktiven Teilprozessen

@@ -19,7 +19,8 @@ class TProcess : virtual public TBusinessOperations, virtual public TProcess_Pre
 		void swap(TProcess& ref) noexcept;
 		void copy(TProcess const& ref);
 
-		void Init(TMyForm&&) override;
+		// Methoden aus TBusinessOperations mit Hilfe der Methoden aus den anderen Klassen implementieren
+		virtual void Init(TMyForm&&) override;
 		virtual void Login(void) override;
 
 

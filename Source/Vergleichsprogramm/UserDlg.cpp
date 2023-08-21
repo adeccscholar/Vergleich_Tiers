@@ -3,9 +3,7 @@
 #include <QLabel> 
 
 
-UserDlg::UserDlg(QWidget *parent)
-    : QDialog(parent)
-{
+UserDlg::UserDlg(QWidget *parent) : QDialog(parent) {
     ui.setupUi(this);
 
     ui.lblUser->setBuddy(ui.edtUser);
@@ -26,7 +24,7 @@ UserDlg::UserDlg(QWidget *parent)
 
     connect(ui.btnOk,         &QPushButton::clicked, this, [this]() { accept(); });
     connect(ui.btnCancel,     &QPushButton::clicked, this, [this]() { reject(); });
-}
+   }
 
-UserDlg::~UserDlg()
-{}
+UserDlg::~UserDlg() {
+   }

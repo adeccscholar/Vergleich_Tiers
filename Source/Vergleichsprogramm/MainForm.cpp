@@ -1,7 +1,7 @@
 #include "MainForm.h"
 
 
-
+#include "System/MyGeoLocation.h"
 
 MainForm::MainForm(QWidget *parent)
     : QMainWindow(parent)

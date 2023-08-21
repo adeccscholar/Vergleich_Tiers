@@ -98,6 +98,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Processes\BusinessOperations.cpp" />
     <ClCompile Include="Presenter_Process_Impl_Qt.cpp" />
     <ClCompile Include="UserDlg.cpp" />
     <QtRcc Include="MainForm.qrc" />
@@ -117,6 +118,9 @@
     <ClInclude Include="..\..\adecc_Database\adecc_Database\MyDatabaseCredentials.h" />
     <ClInclude Include="..\..\adecc_Database\adecc_Database\MyDatabaseDefinitions.h" />
     <ClInclude Include="..\..\adecc_Database\adecc_Database\MyDatabaseExceptions.h" />
+    <ClInclude Include="..\..\adecc_Scholar\adecc_Scholar\MyForm.h" />
+    <ClInclude Include="..\..\adecc_Scholar\adecc_Scholar\MyStream.h" />
+    <ClInclude Include="..\Persistance\Reader_Process_Database_Params.h" />
     <ClInclude Include="..\Persistance\Reader_Process_Impl.h" />
     <ClInclude Include="..\Presenter\Presenter_Process_Impl.h" />
     <ClInclude Include="..\Processes\BusinessOperations.h" />
@@ -124,6 +128,7 @@
     <ClInclude Include="..\Processes\Process.h" />
     <ClInclude Include="..\Processes\Process_Impl.h" />
     <ClInclude Include="..\Processes\Reader_Process.h" />
+    <ClInclude Include="..\System\MyGeoLocation.h" />
     <ClInclude Include="Presenter_Process_Impl_Qt.h" />
     <ClInclude Include="Process_Impl_Qt.h" />
     <QtMoc Include="UserDlg.h" />

@@ -33,7 +33,6 @@
 .dcu
 
 #visual studio
-*.filters
 *.user
 *.aps
 

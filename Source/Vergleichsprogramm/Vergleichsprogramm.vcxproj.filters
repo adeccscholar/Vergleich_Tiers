@@ -1,0 +1,173 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>qml;cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>qrc;rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Form Files">
+      <UniqueIdentifier>{99349809-55BA-4b9d-BF79-8FDBB0286EB3}</UniqueIdentifier>
+      <Extensions>ui</Extensions>
+    </Filter>
+    <Filter Include="Translation Files">
+      <UniqueIdentifier>{639EADAA-A684-42e4-A9AD-28FC9BCB8F7C}</UniqueIdentifier>
+      <Extensions>ts</Extensions>
+    </Filter>
+    <Filter Include="Processes">
+      <UniqueIdentifier>{fb1b0d81-5121-4d17-8053-7fae5c16a174}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Processes\Header Files">
+      <UniqueIdentifier>{4184bcbd-c895-4c5c-9564-a03a93ee7288}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Processes\Source Files">
+      <UniqueIdentifier>{9b9dcd15-efc3-453b-af99-b0dd1800ae30}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Process - Presenter">
+      <UniqueIdentifier>{573cf2b5-d9f5-4c51-afa9-a49bdea7157d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Process - Persistence">
+      <UniqueIdentifier>{4032b8f8-b9d1-4dc0-b823-0848f5c89271}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Process - Persistence\Header Files">
+      <UniqueIdentifier>{8855f147-6af1-4270-ba94-034cfb487b67}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Process - Persistence\Source Files">
+      <UniqueIdentifier>{a87c6128-eac6-41c1-b4a1-aa70bc5b9b17}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Process - Presenter\Header Files">
+      <UniqueIdentifier>{ed6f259b-1271-42e1-812d-ee201c646aae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Process - Presenter\Source Files">
+      <UniqueIdentifier>{9b1efd36-2cc6-40e6-b9fe-5f4dccaf7896}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="adecc Database">
+      <UniqueIdentifier>{ffb1950c-2e04-4120-898c-9e9d90f3e8fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="System">
+      <UniqueIdentifier>{4eafb667-f044-4b9d-8d98-6f0164d73dcf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="System\Header Files">
+      <UniqueIdentifier>{d094fa86-0ba4-4200-aebe-8a55aa8b06cb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="System\Source Files">
+      <UniqueIdentifier>{132d9b42-4480-4e02-b04c-17e55032773f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="adecc Scholar">
+      <UniqueIdentifier>{ff0425a8-e596-4f6e-9641-24dfbe0db204}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <QtRcc Include="MainForm.qrc">
+      <Filter>Resource Files</Filter>
+    </QtRcc>
+    <QtUic Include="MainForm.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtMoc Include="MainForm.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <ClCompile Include="MainForm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <None Include="Vergleichsprogramm.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+    <ResourceCompile Include="Vergleichsprogramm.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UserDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Presenter_Process_Impl_Qt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Processes\Process.cpp">
+      <Filter>Processes\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Presenter\Presenter_Process_Impl.cpp">
+      <Filter>Process - Presenter\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Persistance\Reader_Process_Impl.cpp">
+      <Filter>Process - Persistence\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Processes\BusinessOperations.cpp">
+      <Filter>Processes\Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Presenter_Process_Impl_Qt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Process_Impl_Qt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Processes\BusinessOperations.h">
+      <Filter>Processes\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Processes\Presenter_Process.h">
+      <Filter>Processes\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Processes\Process.h">
+      <Filter>Processes\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Processes\Process_Impl.h">
+      <Filter>Processes\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Processes\Reader_Process.h">
+      <Filter>Processes\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\adecc_Database\adecc_Database\MyDatabaseExceptions.h">
+      <Filter>adecc Database</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\adecc_Database\adecc_Database\MyDatabase.h">
+      <Filter>adecc Database</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\adecc_Database\adecc_Database\MyDatabaseCredentials.h">
+      <Filter>adecc Database</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\adecc_Database\adecc_Database\MyDatabaseDefinitions.h">
+      <Filter>adecc Database</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Presenter\Presenter_Process_Impl.h">
+      <Filter>Process - Presenter\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Persistance\Reader_Process_Impl.h">
+      <Filter>Process - Persistence\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Persistance\Reader_Process_Database_Params.h">
+      <Filter>Process - Persistence\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\System\MyGeoLocation.h">
+      <Filter>System\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\adecc_Scholar\adecc_Scholar\MyForm.h">
+      <Filter>adecc Scholar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\adecc_Scholar\adecc_Scholar\MyStream.h">
+      <Filter>adecc Scholar</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="UserDlg.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+  </ItemGroup>
+  <ItemGroup>
+    <QtUic Include="UserDlg.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+  </ItemGroup>
+</Project>

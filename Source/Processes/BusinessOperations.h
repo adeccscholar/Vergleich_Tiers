@@ -8,16 +8,20 @@ class TMyForm;
  * \brief Interface für die eigentlichen Geschäftsvorfälle, die der Klasse TProcess mit Hilfe der Teilprozesse verarbeitet werden
 */
 class TBusinessOperations {
-   protected:
-	   std::string strApplication;
+   private:
+	   std::string strApplication;  /// Bezeichnung der Anwendung, für welche die Geschäftsprozesse bereitgestellt werden
+		int         iMajorVersion;   /// Hauptversionsnummer für die Anwendung / Geschäftsprozesse
+		int         iMinorVersion;   /// Unterversionsnummer für die Anwendung / Geschäftsprozesse
 	public:
-		TBusinessOperations(void) { strApplication = "GeoDatenApp 2.0"s; }
-		TBusinessOperations(TBusinessOperations const& ref) { copy(ref);  }
-		TBusinessOperations(TBusinessOperations&& ref) noexcept { swap(ref); }
-		virtual ~TBusinessOperations(void) { };
+		TBusinessOperations(void);
+		TBusinessOperations(TBusinessOperations const& ref);
+		TBusinessOperations(TBusinessOperations&& ref) noexcept;
+		virtual ~TBusinessOperations(void);
 
-		void swap(TBusinessOperations& ref) noexcept { std::swap(strApplication, ref.strApplication);  }
-		void copy(TBusinessOperations const& ref) { strApplication = ref.strApplication; }
+		void swap(TBusinessOperations& ref) noexcept;
+		void copy(TBusinessOperations const& ref);
+
+		virtual std::string ApplicationText(void);
 
 		virtual void Init(TMyForm&&) = 0;
 		virtual void Login(void) = 0;

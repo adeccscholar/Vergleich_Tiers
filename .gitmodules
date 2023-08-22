@@ -7,3 +7,6 @@
 [submodule "adecc_Database"]
 	path = adecc_Database
 	url = https://github.com/adeccscholar/adecc_Scholar_Database.git
+[submodule "adecc_FileDlg"]
+	path = adecc_FileDlg
+	url = https://github.com/adeccscholar/adecc_FileDlg.git

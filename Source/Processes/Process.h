@@ -27,6 +27,7 @@ class TProcess : virtual public TBusinessOperations, virtual public TProcess_Pre
 		// Methoden aus TBusinessOperations mit Hilfe der Methoden aus den anderen Klassen implementieren
 		virtual void Init(TMyForm&&) override;
 		virtual void Login(void) override;
+		virtual void ImportBerlin(void) override;
 
 
 	

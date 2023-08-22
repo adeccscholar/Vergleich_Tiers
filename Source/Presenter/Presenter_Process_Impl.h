@@ -24,6 +24,7 @@ public:
    virtual void InitMainForm(TMyForm&& frm, std::string const& strCaption) override;
    virtual void SetMainFormCaption(std::string const&) override;
    virtual login_return LoginForm(std::string const& server, bool hasintegrated, bool integrated, std::string const& user) override;
+   virtual std::pair<bool, std::string> ChooseFile(std::string const&) override;
    virtual void ShowErrorForm(std::string const& caption, std::string const message) override;
    virtual void ShowInformationForm(std::string const& caption, std::string const message) override;
 private:

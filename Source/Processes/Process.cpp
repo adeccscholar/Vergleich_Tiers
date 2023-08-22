@@ -65,3 +65,9 @@ void TProcess::Login(void) {
 		SetMainFormCaption(std::format("application \"{}\" not connected ...", ApplicationText()));
 	   }
    }
+
+void TProcess::ImportBerlin(void) {
+	auto [ret, strFile] = ChooseFile("d:\\test");
+	if (ret) ReadBerlinFromFile(strFile);
+	// Fehlerbehandlung
+   }

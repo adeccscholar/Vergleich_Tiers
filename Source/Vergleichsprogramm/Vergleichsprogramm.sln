@@ -5,6 +5,8 @@ VisualStudioVersion = 17.6.33829.357
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Vergleichsprogramm", "Vergleichsprogramm.vcxproj", "{69D923A8-A6BE-4184-A67C-7AF72F7881D6}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FileDlg_Qt", "..\..\adecc_FileDlg\Src\Visual Studio\Qt6\FileDlg_Qt\FileDlg_Qt.vcxproj", "{5C44ABD5-66B8-492A-A4B0-83BD7350E42A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -15,6 +17,10 @@ Global
 		{69D923A8-A6BE-4184-A67C-7AF72F7881D6}.Debug|x64.Build.0 = Debug|x64
 		{69D923A8-A6BE-4184-A67C-7AF72F7881D6}.Release|x64.ActiveCfg = Release|x64
 		{69D923A8-A6BE-4184-A67C-7AF72F7881D6}.Release|x64.Build.0 = Release|x64
+		{5C44ABD5-66B8-492A-A4B0-83BD7350E42A}.Debug|x64.ActiveCfg = Debug|x64
+		{5C44ABD5-66B8-492A-A4B0-83BD7350E42A}.Debug|x64.Build.0 = Debug|x64
+		{5C44ABD5-66B8-492A-A4B0-83BD7350E42A}.Release|x64.ActiveCfg = Release|x64
+		{5C44ABD5-66B8-492A-A4B0-83BD7350E42A}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

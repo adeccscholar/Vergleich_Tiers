@@ -2,6 +2,7 @@
 
 #include <string>
 #include <tuple>
+#include <utility>
 
 class TMyForm;
 
@@ -29,6 +30,7 @@ class TProcess_Presenter {
       virtual void SetMainFormCaption(std::string const&) = 0;
       virtual login_return LoginForm(std::string const& server, bool hasintegrated, bool integrated, std::string const& user) = 0;
 
+      virtual std::pair<bool, std::string> ChooseFile(std::string const&) = 0;
       virtual void ShowErrorForm(std::string const& caption, std::string const message) = 0;
       virtual void ShowInformationForm(std::string const& caption, std::string const message) = 0;
 };

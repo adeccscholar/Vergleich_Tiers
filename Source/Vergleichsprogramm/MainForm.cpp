@@ -14,7 +14,7 @@ MainForm::MainForm(QWidget *parent)
     ui.statusBar->addPermanentWidget(statusLabel);
 
     connect(ui.btnLogin, &QPushButton::clicked, this, [this]() { processes().Login(); });
-
+    connect(ui.btnImportBln, &QPushButton::clicked, this, [this]() { processes().ImportBerlin(); });
     processes().Init(TMyForm(this, false));
 }
 

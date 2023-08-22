@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1182</width>
+    <width>1178</width>
     <height>616</height>
    </rect>
   </property>
@@ -66,6 +66,13 @@
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="btnImportBln">
+         <property name="text">
+          <string>btnImportBln</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer name="verticalSpacer">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -88,7 +95,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1182</width>
+     <width>1178</width>
      <height>22</height>
     </rect>
    </property>

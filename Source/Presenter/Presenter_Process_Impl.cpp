@@ -1,5 +1,5 @@
 ﻿#include "Presenter_Process_Impl.h"
-
+#include "MyFileDlg.h"
 #include <adecc_Tools/MyExceptions.h>
 #include <format>
 
@@ -46,6 +46,7 @@ void TProcess_Presenter_Impl::InitMainForm(TMyForm&& form, std::string const& st
       frm.GetAsStream<Narrow, EMyFrameworkType::statusbar>(old_clog, "sbMain");
 
       frm.Set<EMyFrameworkType::button, std::string>("btnLogin"s, "login ...");
+      frm.Set<EMyFrameworkType::button, std::string>("btnImportBln"s, "migrate Berlin ...");
       frm.Enable<EMyFrameworkType::button>("btnLogin"s, true);
       } 
    catch (std::exception& ex) {
@@ -98,11 +99,17 @@ TProcess_Presenter_Impl::login_return TProcess_Presenter_Impl::LoginForm(std::st
    else throw TMy_UserBreak(std::format("the user canceled the login process for the database \"{}\".", server));
    }
 
+std::pair<bool, std::string> TProcess_Presenter_Impl::ChooseFile(std::string const& strInputFile) {
+   auto [ret, strFile] = TMyFileDlg::SelectWithFileDirDlg(strInputFile);
+   return { ret == EMyRetResults::ok, strFile };
+   }
 
 void TProcess_Presenter_Impl::ShowErrorForm(std::string const& caption, std::string const message) {
-   frm.Message(EMyMessageType::error, caption, message);
+   //frm.Message(EMyMessageType::error, caption, message);
+   TMyFileDlg::Message(EMyMessageType::error, caption, message);
    }
 
 void TProcess_Presenter_Impl::ShowInformationForm(std::string const& caption, std::string const message) {
-   frm.Message(EMyMessageType::information, caption, message);
-   }
+   //frm.Message(EMyMessageType::information, caption, message);
+   TMyFileDlg::Message(EMyMessageType::information, caption, message);
+}

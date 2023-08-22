@@ -25,4 +25,5 @@ class TBusinessOperations {
 
 		virtual void Init(TMyForm&&) = 0;
 		virtual void Login(void) = 0;
+		virtual void ImportBerlin(void) = 0;
    };

@@ -2,6 +2,7 @@
 #include "MyFileDlg.h"
 #include <adecc_Tools/MyExceptions.h>
 #include <format>
+#include <expected>
 
 std::vector<tplList<Narrow>> Berlin_Districts_Columns{
       tplList<Narrow> { "District",  190, EMyAlignmentType::left   },
@@ -28,6 +29,9 @@ struct TMyNum : public std::numpunct<char> {
 TMyNum newNumPunct;
 
 
+TProcess_Presenter_Impl::TProcess_Presenter_Impl(void) : TProcess_Presenter() { 
+   std::cerr << "constructor for TProcess_Presenter_Impl called\n"; 
+   }
 
 void TProcess_Presenter_Impl::InitMainForm(TMyForm&& form, std::string const& strCaption) {
    frm.swap(form);
@@ -60,7 +64,7 @@ void TProcess_Presenter_Impl::SetMainFormCaption(std::string const& strCaption) 
    }
 
 
-TProcess_Presenter_Impl::login_return TProcess_Presenter_Impl::LoginForm(std::string const& server, bool hasintegrated,
+std::expected<TProcess_Presenter::login_return, MyErrorInfo>  TProcess_Presenter_Impl::LoginForm(std::string const& server, bool hasintegrated,
                                                                      bool integrated, std::string const& user) {
    TMyForm dlg(CreateLoginForm(frm));  // Diese Zeile in eigene
 
@@ -71,7 +75,7 @@ TProcess_Presenter_Impl::login_return TProcess_Presenter_Impl::LoginForm(std::st
    dlg.Set<EMyFrameworkType::label, std::string>("lblPassword", "password:");
    dlg.Set<EMyFrameworkType::edit, std::string>("edtUser", user);
    dlg.Set<EMyFrameworkType::edit, std::string>("edtPassword", "");
-
+   
    dlg.Set< EMyFrameworkType::checkbox, std::string>("chbIntegrated", "use integrated security");
    if (hasintegrated) {
       dlg.Visible< EMyFrameworkType::checkbox>("chbIntegrated", true);
@@ -87,16 +91,16 @@ TProcess_Presenter_Impl::login_return TProcess_Presenter_Impl::LoginForm(std::st
 
    if (dlg.ShowModal() == EMyRetResults::ok) {
       auto boIntegrated = hasintegrated ? dlg.Get<EMyFrameworkType::checkbox, bool>("chbIntegrated").value_or(false) : false;
-      if (boIntegrated) return { ""s, ""s, boIntegrated };
+      if (boIntegrated) return { { ""s, ""s, boIntegrated } };
       else {
          auto strUser = dlg.Get<EMyFrameworkType::edit, std::string>("edtUser");
          auto strPwd  = dlg.Get<EMyFrameworkType::edit, std::string>("edtPassword");
 
-         if (strUser) return { *strUser, strPwd.value_or(""s), boIntegrated };
-         else throw TMy_InputError("no username was entered in the login dialog.");
+         if (strUser) return { { *strUser, strPwd.value_or(""s), boIntegrated } };
+         else return std::unexpected( MyErrorInfo { EMyErrorType::InputError, "no username was entered in the login dialog."s });
       }
    }
-   else throw TMy_UserBreak(std::format("the user canceled the login process for the database \"{}\".", server));
+   else return std::unexpected( MyErrorInfo { EMyErrorType::Userbreak, std::format("the user canceled the login process for the database \"{}\".", server) } );
    }
 
 std::pair<bool, std::string> TProcess_Presenter_Impl::ChooseFile(std::string const& strInputFile) {

@@ -14,12 +14,9 @@ class TBusinessOperations {
 		int         iMinorVersion;   /// Unterversionsnummer für die Anwendung / Geschäftsprozesse
 	public:
 		TBusinessOperations(void);
-		TBusinessOperations(TBusinessOperations const& ref);
-		TBusinessOperations(TBusinessOperations&& ref) noexcept;
-		virtual ~TBusinessOperations(void);
-
-		void swap(TBusinessOperations& ref) noexcept;
-		void copy(TBusinessOperations const& ref);
+		TBusinessOperations(TBusinessOperations const&) = delete;
+		TBusinessOperations(TBusinessOperations&&) noexcept = delete;
+		virtual ~TBusinessOperations(void) = default;
 
 		virtual std::string ApplicationText(void);
 

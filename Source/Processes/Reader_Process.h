@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <string>
 #include <utility>
 
@@ -7,17 +8,10 @@ class TMyCredential;
 
 class TProcess_Reader {
    public:
-      TProcess_Reader() = default;
-      TProcess_Reader(TProcess_Reader const& ref) { copy(ref); }
-      TProcess_Reader(TProcess_Reader&& ref) noexcept { swap(ref); }
-
+      TProcess_Reader() { std::cerr << "constructor for TProcess_Reader called\n"; }
+      TProcess_Reader(TProcess_Reader const&) = delete;
+      TProcess_Reader(TProcess_Reader&&) noexcept = delete;
       virtual ~TProcess_Reader() = default;
-
-       void swap(TProcess_Reader& ref) noexcept {
-         }
-
-      void copy(TProcess_Reader const& ref) {
-         }
 
       // Bereich mit den Teilprozessen
       virtual bool GetServerHasIntegratedSecurity() = 0;

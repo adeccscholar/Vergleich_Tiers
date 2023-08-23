@@ -6,7 +6,8 @@
 //template <my_db_credentials credential_ty>
 class TProcess_Reader_Impl : virtual public TProcess_Reader {
    public:
-		using concrete_db_server     = TMyMSSQL; // credential_ty || TMyMSSQL TMyMySQL TMyOracle TMyInterbase TMySQLite
+		//using concrete_db_server = credential_ty;
+		using concrete_db_server     = TMyMSSQL; // TMyMSSQL TMyMySQL TMyOracle TMyInterbase TMySQLite
 		using concrete_framework     = TMyQtDb<concrete_db_server>;
 		using concrete_db_connection = TMyDatabase<TMyQtDb, concrete_db_server>;
 		using concrete_query         = TMyQuery<TMyQtDb, concrete_db_server>;
@@ -15,14 +16,14 @@ class TProcess_Reader_Impl : virtual public TProcess_Reader {
 		concrete_db_connection db { };
 	public:
 		TProcess_Reader_Impl();
-	   TProcess_Reader_Impl(TProcess_Reader_Impl const& ref) : TProcess_Reader(ref) { db = ref.db; }
-	   // RValue Konstruktor, Destruktor, swap
+		TProcess_Reader_Impl(TProcess_Reader_Impl const&) = delete;
+		TProcess_Reader_Impl(TProcess_Reader_Impl&&) noexcept = delete;
+		virtual ~TProcess_Reader_Impl() = default;
 
 	   virtual bool GetServerHasIntegratedSecurity(void) override;
 	   virtual std::pair<std::string, std::string> GetConnectionInformations(void) override;
 	   virtual std::pair<bool, std::string> LoginToDb(TMyCredential&& credentials) override;
-	   //virtual void ReadBerlinFromFile(std::string const& strFile) override { };
-
+	   
 		void Check() {	delete new TProcess_Reader_Impl; }
    };
 

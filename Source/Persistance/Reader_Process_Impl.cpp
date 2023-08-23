@@ -5,7 +5,9 @@
 
 TProcess_Reader_Impl::TProcess_Reader_Impl(void) : TProcess_Reader() {
    db = CreateTest<concrete_db_server>();
+   std::cerr << "constructor for TProcess_Reader_Impl called\n";
    }
+
 
 bool TProcess_Reader_Impl::GetServerHasIntegratedSecurity(void) {
    return db.HasIntegratedSecurity();

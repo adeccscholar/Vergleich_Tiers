@@ -8,7 +8,9 @@ class TProcess_Migration_Impl : virtual public TProcess_Migration {
 
 public:
 	TProcess_Migration_Impl();
-	TProcess_Migration_Impl(TProcess_Migration_Impl const& ref) : TProcess_Migration(ref) {  }
+	TProcess_Migration_Impl(TProcess_Migration_Impl const&) = delete;
+	TProcess_Migration_Impl(TProcess_Migration_Impl&&) = delete;
+	virtual ~TProcess_Migration_Impl() = default;
 	// RValue Konstruktor, Destruktor, swap
 
 	virtual void ReadBerlinFromFile(std::string const& strFile) override;

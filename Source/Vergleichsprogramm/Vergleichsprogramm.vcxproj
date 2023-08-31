@@ -132,6 +132,13 @@
     <ClInclude Include="..\..\adecc_Database\adecc_Database\MyDatabaseExceptions.h" />
     <ClInclude Include="..\..\adecc_Scholar\adecc_Scholar\MyForm.h" />
     <ClInclude Include="..\..\adecc_Scholar\adecc_Scholar\MyStream.h" />
+    <ClInclude Include="..\..\adecc_Tools\adecc_Tools\MyConvert.h" />
+    <ClInclude Include="..\..\adecc_Tools\adecc_Tools\MyError.h" />
+    <ClInclude Include="..\..\adecc_Tools\adecc_Tools\MyExceptions.h" />
+    <ClInclude Include="..\..\adecc_Tools\adecc_Tools\MyFileIterator.h" />
+    <ClInclude Include="..\..\adecc_Tools\adecc_Tools\MyHelper.h" />
+    <ClInclude Include="..\..\adecc_Tools\adecc_Tools\MyTrace.h" />
+    <ClInclude Include="..\..\adecc_Tools\adecc_Tools\MyType_Traits.h" />
     <ClInclude Include="..\Migration\Migration_Process_Impl.h" />
     <ClInclude Include="..\Persistance\Reader_Process_Database_Params.h" />
     <ClInclude Include="..\Persistance\Reader_Process_Impl.h" />

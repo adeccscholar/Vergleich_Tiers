@@ -1,15 +1,13 @@
 ﻿#include "BusinessOperations.h"
+#include <adecc_Tools/MyTrace.h>
 #include <iostream>
 #include <format>
 using namespace std::string_literals;
 
 TBusinessOperations::TBusinessOperations(void) {
-   strApplication = "GeoDatenApp"s;
-	iMajorVersion = 2;
-	iMinorVersion = 0;
-	std::cerr << "constructor for TBusinessOperations called\n";
-	}
+   Trace("constructor for TBusinessOperations called."s);
+   }
 
 std::string TBusinessOperations::ApplicationText(void) {
-	return std::format("{} {}.{}", strApplication, iMajorVersion, iMinorVersion);
+   return std::format("{} {}.{}", strApplication, iMajorVersion, iMinorVersion);
    }

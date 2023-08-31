@@ -1,9 +1,12 @@
-﻿#include "Presenter_Process_Impl_Qt.h"
-
+﻿
+#include "Presenter_Process_Impl_Qt.h"
 #include "UserDlg.h"
 
+#include <adecc_Tools/MyTrace.h>
+
+
 TProcess_Presenter_Impl_Qt::TProcess_Presenter_Impl_Qt(void) : TProcess_Presenter_Impl() { 
-   std::cerr << "constructor for TProcess_Presenter_Impl_Qt called\n"; 
+   Trace<ShouldTrace>("constructor for TProcess_Presenter_Impl_Qt called."s);
    }
 
 

@@ -72,6 +72,9 @@
     <Filter Include="Process - Migration\Source Files">
       <UniqueIdentifier>{7ba06480-baad-4e85-84c0-72852000b3eb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="adecc Tools">
+      <UniqueIdentifier>{a385c36a-0305-42dd-a4e8-5fc8dd965820}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="MainForm.qrc">
@@ -176,6 +179,27 @@
     </ClInclude>
     <ClInclude Include="..\Migration\Migration_Process_Impl.h">
       <Filter>Process - Migration\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\adecc_Tools\adecc_Tools\MyConvert.h">
+      <Filter>adecc Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\adecc_Tools\adecc_Tools\MyError.h">
+      <Filter>adecc Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\adecc_Tools\adecc_Tools\MyExceptions.h">
+      <Filter>adecc Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\adecc_Tools\adecc_Tools\MyFileIterator.h">
+      <Filter>adecc Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\adecc_Tools\adecc_Tools\MyHelper.h">
+      <Filter>adecc Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\adecc_Tools\adecc_Tools\MyTrace.h">
+      <Filter>adecc Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\adecc_Tools\adecc_Tools\MyType_Traits.h">
+      <Filter>adecc Tools</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

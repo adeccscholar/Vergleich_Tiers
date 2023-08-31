@@ -5,7 +5,7 @@
 
 TProcess_Reader_Impl::TProcess_Reader_Impl(void) : TProcess_Reader() {
    db = CreateTest<concrete_db_server>();
-   std::cerr << "constructor for TProcess_Reader_Impl called\n";
+   Trace("constructor for TProcess_Reader_Impl called");
    }
 
 

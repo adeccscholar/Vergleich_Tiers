@@ -30,7 +30,7 @@ TMyNum newNumPunct;
 
 
 TProcess_Presenter_Impl::TProcess_Presenter_Impl(void) : TProcess_Presenter() { 
-   std::cerr << "constructor for TProcess_Presenter_Impl called\n"; 
+   Trace("constructor for TProcess_Presenter_Impl called"); 
    }
 
 void TProcess_Presenter_Impl::InitMainForm(TMyForm&& form, std::string const& strCaption) {
@@ -66,41 +66,46 @@ void TProcess_Presenter_Impl::SetMainFormCaption(std::string const& strCaption) 
 
 std::expected<TProcess_Presenter::login_return, MyErrorInfo>  TProcess_Presenter_Impl::LoginForm(std::string const& server, bool hasintegrated,
                                                                      bool integrated, std::string const& user) {
-   TMyForm dlg(CreateLoginForm(frm));  // Diese Zeile in eigene
+   try {
+      TMyForm dlg(CreateLoginForm(frm));  // Diese Zeile in eigene
 
-   dlg.SetCaption(server);
-   dlg.Set<EMyFrameworkType::groupbox, std::string>("grpUser", "credentials");
+      dlg.SetCaption(server);
+      dlg.Set<EMyFrameworkType::groupbox, std::string>("grpUser", "credentials");
 
-   dlg.Set<EMyFrameworkType::label, std::string>("lblUser", "user:");
-   dlg.Set<EMyFrameworkType::label, std::string>("lblPassword", "password:");
-   dlg.Set<EMyFrameworkType::edit, std::string>("edtUser", user);
-   dlg.Set<EMyFrameworkType::edit, std::string>("edtPassword", "");
+      dlg.Set<EMyFrameworkType::label, std::string>("lblUser", "user:");
+      dlg.Set<EMyFrameworkType::label, std::string>("lblPassword", "password:");
+      dlg.Set<EMyFrameworkType::edit, std::string>("edtUser", user);
+      dlg.Set<EMyFrameworkType::edit, std::string>("edtPassword", "");
    
-   dlg.Set< EMyFrameworkType::checkbox, std::string>("chbIntegrated", "use integrated security");
-   if (hasintegrated) {
-      dlg.Visible< EMyFrameworkType::checkbox>("chbIntegrated", true);
-      dlg.Set<EMyFrameworkType::checkbox, bool>("chbIntegrated", integrated);
-      }
+      dlg.Set< EMyFrameworkType::checkbox, std::string>("chbIntegrated", "use integrated security");
+      if (hasintegrated) {
+         dlg.Visible< EMyFrameworkType::checkbox>("chbIntegrated", true);
+         dlg.Set<EMyFrameworkType::checkbox, bool>("chbIntegrated", integrated);
+         }
    else {
       dlg.Set<EMyFrameworkType::checkbox, bool>("chbIntegrated", false);
       dlg.Visible< EMyFrameworkType::checkbox>("chbIntegrated", false);
       }
 
-   dlg.Set<EMyFrameworkType::button, std::string>("btnOk", "login");
-   dlg.Set<EMyFrameworkType::button, std::string>("btnCancel", "cancel");
+      dlg.Set<EMyFrameworkType::button, std::string>("btnOk", "login");
+      dlg.Set<EMyFrameworkType::button, std::string>("btnCancel", "cancel");
 
-   if (dlg.ShowModal() == EMyRetResults::ok) {
-      auto boIntegrated = hasintegrated ? dlg.Get<EMyFrameworkType::checkbox, bool>("chbIntegrated").value_or(false) : false;
-      if (boIntegrated) return { { ""s, ""s, boIntegrated } };
-      else {
-         auto strUser = dlg.Get<EMyFrameworkType::edit, std::string>("edtUser");
-         auto strPwd  = dlg.Get<EMyFrameworkType::edit, std::string>("edtPassword");
+      if (dlg.ShowModal() == EMyRetResults::ok) {
+         auto boIntegrated = hasintegrated ? dlg.Get<EMyFrameworkType::checkbox, bool>("chbIntegrated").value_or(false) : false;
+         if (boIntegrated) return { { ""s, ""s, boIntegrated } };
+         else {
+            auto strUser = dlg.Get<EMyFrameworkType::edit, std::string>("edtUser");
+            auto strPwd  = dlg.Get<EMyFrameworkType::edit, std::string>("edtPassword");
 
-         if (strUser) return { { *strUser, strPwd.value_or(""s), boIntegrated } };
-         else return std::unexpected( MyErrorInfo { EMyErrorType::InputError, "no username was entered in the login dialog."s });
+            if (strUser) return { { *strUser, strPwd.value_or(""s), boIntegrated } };
+            else return std::unexpected( MyErrorInfo { EMyErrorType::InputError, "no username was entered in the login dialog."s });
+            }
+         }
+      else return std::unexpected( MyErrorInfo { EMyErrorType::Userbreak, std::format("the user canceled the login process for the database \"{}\".", server) } );
       }
-   }
-   else return std::unexpected( MyErrorInfo { EMyErrorType::Userbreak, std::format("the user canceled the login process for the database \"{}\".", server) } );
+   catch(std::exception const& ex) {
+      return std::unexpected(MyErrorInfo{ EMyErrorType::RuntimeError, std::format("exception in function LoginForm: {}", ex.what()) });
+      }
    }
 
 std::pair<bool, std::string> TProcess_Presenter_Impl::ChooseFile(std::string const& strInputFile) {
@@ -108,12 +113,12 @@ std::pair<bool, std::string> TProcess_Presenter_Impl::ChooseFile(std::string con
    return { ret == EMyRetResults::ok, strFile };
    }
 
-void TProcess_Presenter_Impl::ShowErrorForm(std::string const& caption, std::string const message) {
+void TProcess_Presenter_Impl::ShowErrorForm(std::string const& caption, std::string const& message) {
    //frm.Message(EMyMessageType::error, caption, message);
    TMyFileDlg::Message(EMyMessageType::error, caption, message);
    }
 
-void TProcess_Presenter_Impl::ShowInformationForm(std::string const& caption, std::string const message) {
+void TProcess_Presenter_Impl::ShowInformationForm(std::string const& caption, std::string const& message) {
    //frm.Message(EMyMessageType::information, caption, message);
    TMyFileDlg::Message(EMyMessageType::information, caption, message);
 }

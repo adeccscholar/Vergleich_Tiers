@@ -34,7 +34,11 @@
         </sizepolicy>
        </property>
       </widget>
-      <widget class="QTextEdit" name="textError"/>
+      <widget class="QTextEdit" name="textError">
+       <property name="lineWrapMode">
+        <enum>QTextEdit::NoWrap</enum>
+       </property>
+      </widget>
      </widget>
     </item>
     <item>

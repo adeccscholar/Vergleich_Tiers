@@ -210,6 +210,15 @@
     <ClInclude Include="..\Processes\Reader_System_Db.h">
       <Filter>Processes\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\Persistance\Reader_Create_Db_Impl.h">
+      <Filter>Process - Persistence\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Persistance\Reader_Overview_Db_Impl.h">
+      <Filter>Process - Persistence\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Persistance\Reader_System_Db_Impl.h">
+      <Filter>Process - Persistence\Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="UserDlg.h">

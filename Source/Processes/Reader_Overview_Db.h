@@ -4,7 +4,7 @@
 
 class TProcess_Reader_Overview : virtual public TProcess_Reader {
    public:
-      TProcess_Reader_Overview() : TProcess_Reader() { Trace("constructor for TProcess_Reader_Create called."s); }
+      TProcess_Reader_Overview() : TProcess_Reader() { Trace("constructor for TProcess_Reader_Overview called."s); }
       TProcess_Reader_Overview(TProcess_Reader_Overview const&) = delete;
       TProcess_Reader_Overview(TProcess_Reader_Overview&&) noexcept = delete;
       virtual ~TProcess_Reader_Overview() = default;

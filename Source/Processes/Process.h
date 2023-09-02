@@ -2,7 +2,11 @@
 
 #include "BusinessOperations.h"
 #include "Presenter_Process.h"
-#include "Reader_Process.h"
+
+#include "Reader_Create_Db.h"
+#include "Reader_System_Db.h"
+#include "Reader_Overview_Db.h"
+
 #include "Migration_Process.h"
 #include <adecc_Tools/MyTrace.h>
 
@@ -80,7 +84,8 @@ public:
  * a pack of likewise abstract base classes. Partial inheritance is used for this purpose. 
  * @details These methods define subprocesses, which can be developed in different teams. 
 */
-using Process_Base = TProcess_Helper<TBusinessOperations, TProcess_Presenter, TProcess_Reader, TProcess_Migration>;
+//using Process_Base = TProcess_Helper<TBusinessOperations, TProcess_Presenter, TProcess_Reader, TProcess_Migration>;
+using Process_Base = TProcess_Helper<TBusinessOperations, TProcess_Presenter, TProcess_Reader_Create, TProcess_Reader_System, TProcess_Reader_Overview, TProcess_Migration>;
 
 
 class TProcess : virtual public Process_Base {

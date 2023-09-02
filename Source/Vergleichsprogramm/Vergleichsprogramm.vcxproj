@@ -140,8 +140,11 @@
     <ClInclude Include="..\..\adecc_Tools\adecc_Tools\MyTrace.h" />
     <ClInclude Include="..\..\adecc_Tools\adecc_Tools\MyType_Traits.h" />
     <ClInclude Include="..\Migration\Migration_Process_Impl.h" />
+    <ClInclude Include="..\Persistance\Reader_Create_Db_Impl.h" />
+    <ClInclude Include="..\Persistance\Reader_Overview_Db_Impl.h" />
     <ClInclude Include="..\Persistance\Reader_Process_Database_Params.h" />
     <ClInclude Include="..\Persistance\Reader_Process_Impl.h" />
+    <ClInclude Include="..\Persistance\Reader_System_Db_Impl.h" />
     <ClInclude Include="..\Presenter\Presenter_Process_Impl.h" />
     <ClInclude Include="..\Processes\BusinessOperations.h" />
     <ClInclude Include="..\Processes\Migration_Process.h" />

@@ -63,7 +63,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>$(Qt_INCLUDEPATH_);..;../../adecc_Database;../../adecc_Tools;../../adecc_Scholar;../../adecc_FileDlg/Src/Independed</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>$(Qt_DEFINES_);%(PreprocessorDefinitions);BUILD_WITH_QT</PreprocessorDefinitions>
+      <PreprocessorDefinitions>$(Qt_DEFINES_);%(PreprocessorDefinitions);BUILD_WITH_QT;WITH_TRACE</PreprocessorDefinitions>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
@@ -77,7 +77,7 @@
       <AdditionalIncludeDirectories>$(Qt_INCLUDEPATH_);..;../../adecc_Database;../../adecc_Tools;../../adecc_Scholar;../../adecc_FileDlg/Src/Independed</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <PreprocessorDefinitions>$(Qt_DEFINES_);%(PreprocessorDefinitions);BUILD_WITH_QT</PreprocessorDefinitions>
+      <PreprocessorDefinitions>$(Qt_DEFINES_);%(PreprocessorDefinitions);BUILD_WITH_QT;WITH_TRACE</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(ProjectDir)\..\..\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -148,7 +148,10 @@
     <ClInclude Include="..\Processes\Presenter_Process.h" />
     <ClInclude Include="..\Processes\Process.h" />
     <ClInclude Include="..\Processes\Process_Impl.h" />
+    <ClInclude Include="..\Processes\Reader_Create_Db.h" />
+    <ClInclude Include="..\Processes\Reader_Overview_Db.h" />
     <ClInclude Include="..\Processes\Reader_Process.h" />
+    <ClInclude Include="..\Processes\Reader_System_Db.h" />
     <ClInclude Include="..\System\MyGeoLocation.h" />
     <ClInclude Include="Presenter_Process_Impl_Qt.h" />
     <ClInclude Include="Process_Impl_Qt.h" />

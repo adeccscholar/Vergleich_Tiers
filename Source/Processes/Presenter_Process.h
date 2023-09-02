@@ -34,6 +34,6 @@ class TProcess_Presenter {
       virtual std::expected<login_return, MyErrorInfo> LoginForm(std::string const& server, bool hasintegrated, bool integrated, std::string const& user) = 0;
 
       virtual std::pair<bool, std::string> ChooseFile(std::string const&) = 0;
-      virtual void ShowErrorForm(std::string const& caption, std::string const& message) = 0;
-      virtual void ShowInformationForm(std::string const& caption, std::string const& message) = 0;
+      virtual void ShowErrorForm(std::string const& caption, std::string const& message, std::string const& details = ""s) = 0;
+      virtual void ShowInformationForm(std::string const& caption, std::string const& message, std::string const& details = ""s) = 0;
 };

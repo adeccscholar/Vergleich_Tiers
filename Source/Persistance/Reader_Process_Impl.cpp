@@ -9,25 +9,28 @@ TProcess_Reader_Impl::TProcess_Reader_Impl(void) : TProcess_Reader() {
    }
 
 
-bool TProcess_Reader_Impl::GetServerHasIntegratedSecurity(void) {
+bool TProcess_Reader_Impl::GetServerHasIntegratedSecurity(void) const {
    return db.HasIntegratedSecurity();
    }
 
-std::pair<std::string, std::string> TProcess_Reader_Impl::GetConnectionInformations(void) {
+std::pair<std::string, std::string> TProcess_Reader_Impl::GetConnectionInformations(void) const {
    return { db.GetDatabase(), db.ServerType() };
    }
 
+std::string TProcess_Reader_Impl::GetDatabaseInformations(void) const {
+   return db.GetInformations();
+}
 
-std::pair<bool, std::string> TProcess_Reader_Impl::LoginToDb(TMyCredential&& credentials) {
+std::expected<std::string, MyErrorInfo> TProcess_Reader_Impl::LoginToDb(TMyCredential&& credentials) {
    try {
       db += credentials;
       db.Open();
-      return { true, db.GetInformations() };
+      return { db.GetInformations() };
       }
    catch (TMy_Db_Exception& ex) {
-      return { false, ex.information() };
+      return std::unexpected( MyErrorInfo { EMyErrorType::DatabaseError, "error while login to database"s, ex.information() } );
       }
    catch (std::exception& ex) {
-      return { false, ex.what() };
+      return std::unexpected(MyErrorInfo{ EMyErrorType::DatabaseError, "error while login to database"s, ex.what() });
       }
    }

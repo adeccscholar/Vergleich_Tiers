@@ -17,8 +17,8 @@ MainForm::MainForm(QWidget *parent)
     connect(ui.btnImportBln, &QPushButton::clicked, this, [this]() { processes().ImportBerlin(); });
 
     processes().Init(TMyForm(this, false));
-    //TProcess_Impl_Qt test; 
-    //std::cerr << test.ApplicationText() << "\n";
+    TProcess_Impl_Qt test; 
+    std::cerr << test.ApplicationText() << "\n";
 }
 
 MainForm::~MainForm()

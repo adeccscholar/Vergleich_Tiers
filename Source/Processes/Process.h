@@ -14,6 +14,7 @@
  * the classes which we want assemble to our business processes are really fulfilled. 
  * 
  * \details Classes that are assembled for the processes should be follow this constraints
+ * - (have a standard constructor)
  * - be a class
  * - be polymorphic
  * - have a virtual destructor
@@ -24,28 +25,23 @@
  *
  * \details Note that while an abstract class has a default constructor for its own data elements, it is not constructible.
  * Abstract must not be checked, because later concrete classes also are used as base classes for implementations
+ * \details std::is_copy_constructible_v, std::is_move_constructible_v return false for abstract classes. Its not possible to 
+ * check the existence of the constructors with Standard C++, but its not necessary because its not callable for abstract classes
  * \tparam  ty the type should be tested with the concept process_type
  */ 
 template <typename ty>
 concept process_type = std::is_class_v<ty> &&
-                       //std::is_default_constructible_v<ty> &&
                        std::is_polymorphic_v<ty> &&
 	                    std::has_virtual_destructor_v<ty> &&
-                       !std::is_copy_constructible_v<ty> &&
-                       !std::is_move_constructible_v<ty> &&
+	                    !std::is_copy_constructible_v<ty> &&
+	                    !std::is_move_constructible_v<ty> &&
                        !std::is_copy_assignable_v<ty> &&
                        !std::is_move_assignable_v<ty>;
 
 template <typename ty>
-concept concrete_process_type = std::is_class_v<ty> &&
+concept concrete_process_type = process_type<ty> &&
                                 !std::is_abstract_v<ty> &&
-                                std::is_default_constructible_v<ty> &&
-                                std::is_polymorphic_v<ty> &&
-                                std::has_virtual_destructor_v<ty> &&
-                                !std::is_copy_constructible_v<ty> &&
-                                !std::is_move_constructible_v<ty> &&
-                                !std::is_copy_assignable_v<ty> &&
-                                !std::is_move_assignable_v<ty>;
+                                std::is_default_constructible_v<ty>;
 
 template <typename ty>
 using concrete_process = std::enable_if_t<concrete_process_type<ty>, ty>;

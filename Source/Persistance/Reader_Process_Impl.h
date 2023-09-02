@@ -20,9 +20,10 @@ class TProcess_Reader_Impl : virtual public TProcess_Reader {
 		TProcess_Reader_Impl(TProcess_Reader_Impl&&) noexcept = delete;
 		virtual ~TProcess_Reader_Impl() = default;
 
-	   virtual bool GetServerHasIntegratedSecurity(void) override;
-	   virtual std::pair<std::string, std::string> GetConnectionInformations(void) override;
-	   virtual std::pair<bool, std::string> LoginToDb(TMyCredential&& credentials) override;
+	   virtual bool GetServerHasIntegratedSecurity(void) const override;
+	   virtual std::pair<std::string, std::string> GetConnectionInformations(void) const override;
+		virtual std::string GetDatabaseInformations(void) const override;
+	   virtual std::expected<std::string, MyErrorInfo> LoginToDb(TMyCredential&& credentials) override;
 	   
 		void Check() {	delete new TProcess_Reader_Impl; }
    };

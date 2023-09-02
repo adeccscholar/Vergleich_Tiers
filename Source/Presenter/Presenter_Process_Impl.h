@@ -27,8 +27,8 @@ public:
    virtual void SetMainFormCaption(std::string const&) override;
    virtual std::expected<login_return, MyErrorInfo> LoginForm(std::string const& server, bool hasintegrated, bool integrated, std::string const& user) override;
    virtual std::pair<bool, std::string> ChooseFile(std::string const&) override;
-   virtual void ShowErrorForm(std::string const& caption, std::string const& message) override;
-   virtual void ShowInformationForm(std::string const& caption, std::string const& message) override;
+   virtual void ShowErrorForm(std::string const& caption, std::string const& message, std::string const& details) override;
+   virtual void ShowInformationForm(std::string const& caption, std::string const& message, std::string const& details) override;
 private:
    virtual TMyForm CreateLoginForm(TMyForm& parent) = 0;
 };

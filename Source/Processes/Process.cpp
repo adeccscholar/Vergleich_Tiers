@@ -26,36 +26,34 @@ void TProcess::Login(void) {
 	try {
 		if (auto ret = LoginForm(strTheme, GetServerHasIntegratedSecurity(), false, ""); ret.has_value()) {
 			auto const& [usr, pwd, isec] = *ret;
-			if (auto [ret, msg] = LoginToDb({ usr, pwd, GetServerHasIntegratedSecurity() && isec }) ; ret) {
+			if (auto ret = LoginToDb({ usr, pwd, GetServerHasIntegratedSecurity() && isec }) ; ret.has_value()) {
 				auto text = std::format("application \"{}\" connected to {} / {} ...", ApplicationText(), strDatabase, strServerType);
 				Trace(text);
-			   ShowInformationForm(strTheme, msg);
+			   ShowInformationForm(strTheme, ret.value());
 			   SetMainFormCaption(text);
 		      }
 		   else { 
+				auto const& [errorcode, msg, details] = ret.error();
 				auto text = std::format("application \"{}\" not connected ...", ApplicationText());
 				Trace(text);
-				ShowErrorForm(strTheme, msg);
+				ShowErrorForm(strTheme, msg, details);
 			   SetMainFormCaption(text);
 	         }
 	      }
 		else {
-			std::string strDetail = ""s;
+			auto const& [errorcode, message, details] = ret.error();
 			std::function<void()> call_msg_dlg;
-			switch(ret.error().first) {
+			switch(errorcode) {
 			   case EMyErrorType::Userbreak:
-					strDetail = "user break"s;
-					call_msg_dlg = std::bind(&TProcess_Presenter::ShowInformationForm, this, std::cref(strTheme), std::cref(ret.error().second));
+					call_msg_dlg = std::bind(&TProcess_Presenter::ShowInformationForm, this, std::cref(strTheme), std::cref(message), std::cref(details));
 				   break;
 			   case EMyErrorType::InputError:
-					strDetail = "input error"s;
-					call_msg_dlg = std::bind(&TProcess_Presenter::ShowErrorForm, this, std::cref(strTheme), std::cref(ret.error().second));
+					call_msg_dlg = std::bind(&TProcess_Presenter::ShowErrorForm, this, std::cref(strTheme), std::cref(message), std::cref(details));
 					break;
 			   default:
-					strDetail = "unexpected error"s;
-					call_msg_dlg = std::bind(&TProcess_Presenter::ShowErrorForm, this, std::cref(strTheme), std::cref(ret.error().second));
+					call_msg_dlg = std::bind(&TProcess_Presenter::ShowErrorForm, this, std::cref(strTheme), std::cref(message), std::cref(details));
 			   }
-			auto text = std::format("application \"{}\" not connected to database {} at {}, {}", ApplicationText(), strDatabase, strServerType, strDetail);
+			auto text = std::format("application \"{}\" not connected to database {} at {}, {}", ApplicationText(), strDatabase, strServerType, message);
 			Trace(text);
 			call_msg_dlg();
 			SetMainFormCaption(text);

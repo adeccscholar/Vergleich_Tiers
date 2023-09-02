@@ -98,13 +98,15 @@ std::expected<TProcess_Presenter::login_return, MyErrorInfo>  TProcess_Presenter
             auto strPwd  = dlg.Get<EMyFrameworkType::edit, std::string>("edtPassword");
 
             if (strUser) return { { *strUser, strPwd.value_or(""s), boIntegrated } };
-            else return std::unexpected( MyErrorInfo { EMyErrorType::InputError, "no username was entered in the login dialog."s });
+            else return std::unexpected( MyErrorInfo { EMyErrorType::InputError, "no username was entered in the login dialog."s, "" });
             }
          }
-      else return std::unexpected( MyErrorInfo { EMyErrorType::Userbreak, std::format("the user canceled the login process for the database \"{}\".", server) } );
+      else return std::unexpected( MyErrorInfo { EMyErrorType::Userbreak, "Process aborted by user break"s, 
+                                                 std::format("login process for the database \"{}\" aborted.", server) } );
       }
    catch(std::exception const& ex) {
-      return std::unexpected(MyErrorInfo{ EMyErrorType::RuntimeError, std::format("exception in function LoginForm: {}", ex.what()) });
+      return std::unexpected(MyErrorInfo{ EMyErrorType::RuntimeError, "process aborted with runtime error"s, 
+                              std::format("exception in function LoginForm: {}", ex.what()) });
       }
    }
 
@@ -113,12 +115,12 @@ std::pair<bool, std::string> TProcess_Presenter_Impl::ChooseFile(std::string con
    return { ret == EMyRetResults::ok, strFile };
    }
 
-void TProcess_Presenter_Impl::ShowErrorForm(std::string const& caption, std::string const& message) {
+void TProcess_Presenter_Impl::ShowErrorForm(std::string const& caption, std::string const& message, std::string const& details) {
    //frm.Message(EMyMessageType::error, caption, message);
-   TMyFileDlg::Message(EMyMessageType::error, caption, message);
+   TMyFileDlg::Message(EMyMessageType::error, caption, message, details);
    }
 
-void TProcess_Presenter_Impl::ShowInformationForm(std::string const& caption, std::string const& message) {
+void TProcess_Presenter_Impl::ShowInformationForm(std::string const& caption, std::string const& message, std::string const& details) {
    //frm.Message(EMyMessageType::information, caption, message);
-   TMyFileDlg::Message(EMyMessageType::information, caption, message);
+   TMyFileDlg::Message(EMyMessageType::information, caption, message, details);
 }

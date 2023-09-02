@@ -201,6 +201,15 @@
     <ClInclude Include="..\..\adecc_Tools\adecc_Tools\MyType_Traits.h">
       <Filter>adecc Tools</Filter>
     </ClInclude>
+    <ClInclude Include="..\Processes\Reader_Create_Db.h">
+      <Filter>Processes\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Processes\Reader_Overview_Db.h">
+      <Filter>Processes\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Processes\Reader_System_Db.h">
+      <Filter>Processes\Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="UserDlg.h">

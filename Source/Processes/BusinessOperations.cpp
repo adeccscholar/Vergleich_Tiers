@@ -8,6 +8,7 @@ TBusinessOperations::TBusinessOperations(void) {
    Trace("constructor for TBusinessOperations called."s);
    }
 
-std::string TBusinessOperations::ApplicationText(void) {
+std::string TBusinessOperations::ApplicationText(void) const {
    return std::format("{} {}.{}", strApplication, iMajorVersion, iMinorVersion);
    }
+

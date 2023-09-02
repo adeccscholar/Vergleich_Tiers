@@ -18,6 +18,7 @@
  * the classes which we want assemble to our business processes are really fulfilled. 
  * 
  * \details Classes that are assembled for the processes should be follow this constraints
+ * - there is only an unique instance of a concrete process class
  * - (have a standard constructor)
  * - be a class
  * - be polymorphic
@@ -90,7 +91,8 @@ using Process_Base = TProcess_Helper<TBusinessOperations, TProcess_Presenter, TP
 
 class TProcess : virtual public Process_Base {
    private:
-		int iBuild = 1001;
+		int iBuild  = 1001;
+		bool boProcessIsInitialized = false;
    public:
 		TProcess(void);
 		virtual ~TProcess() = default;
@@ -104,13 +106,16 @@ class TProcess : virtual public Process_Base {
 		/// \}
 
 
-		virtual std::string ApplicationText(void) override;
+		virtual std::string ApplicationText(void) const override;
 
 		/**
 		 * @name overridden abstact methods from TBusinessOperations
 		 * \{
 		*/
+		virtual bool ReadyForOperations(void) const override { return boProcessIsInitialized && IsConnectedToDatabase(); }
+		virtual std::string CaptionForMainForm(void) const override;
 		virtual void Init(TMyForm&&) override;
+		virtual void Close() override;
 		virtual void Login(void) override;
 		virtual void ImportBerlin(void) override;
 	   /// \}

@@ -22,10 +22,15 @@ class TBusinessOperations {
 		TBusinessOperations& operator = (TBusinessOperations const&) = delete;
 		TBusinessOperations& operator = (TBusinessOperations&&) noexcept = delete;
 
-		virtual std::string ApplicationText(void);
+		virtual std::string ApplicationText(void) const;
+		virtual std::string CaptionForMainForm(void) const = 0;
 
+		/// process is initialized and connected, ready to proceed operations
+		virtual bool ReadyForOperations(void) const = 0;
 		/// initialize the application, processes and connection to the main window
 		virtual void Init(TMyForm&&) = 0;
+      /// close and finishing the process
+		virtual void Close() = 0;
 		/// Dialog to enter the user / password and connect to the database
 		virtual void Login(void) = 0;
 		/// Reading the file with the information for Berlin and importing it into the database

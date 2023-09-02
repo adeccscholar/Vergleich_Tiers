@@ -34,3 +34,7 @@ std::expected<std::string, MyErrorInfo> TProcess_Reader_Impl::LoginToDb(TMyCrede
       return std::unexpected(MyErrorInfo{ EMyErrorType::DatabaseError, "error while login to database"s, ex.what() });
       }
    }
+
+void TProcess_Reader_Impl::LogoutFromDb() {
+   db.Close();
+   }

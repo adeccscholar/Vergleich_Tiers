@@ -4,7 +4,9 @@
 #include <QLabel>
 #include "ui_MainForm.h"
 
-#include "Process_Impl_Qt.h"
+#include "Processes/BusinessOperations.h"
+
+
 
 class MainForm : public QMainWindow
 {
@@ -14,10 +16,11 @@ public:
     MainForm(QWidget *parent = nullptr);
     ~MainForm();
 
-    TBusinessOperations&       processes() { return proc;  }
-    TBusinessOperations const& processes() const { return proc; }
+    TBusinessOperations& processes();
+    TBusinessOperations const& processes() const;
 private:
     Ui::MainFormClass ui;
-    TProcess_Impl_Qt proc;
     QLabel* statusLabel;
+
+    void Test(void);
 };

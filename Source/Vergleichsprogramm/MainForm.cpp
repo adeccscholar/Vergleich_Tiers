@@ -2,6 +2,7 @@
 
 
 #include "System/MyGeoLocation.h"
+#include "Process_Impl_Qt.h"
 
 MainForm::MainForm(QWidget *parent)
     : QMainWindow(parent)
@@ -17,9 +18,25 @@ MainForm::MainForm(QWidget *parent)
     connect(ui.btnImportBln, &QPushButton::clicked, this, [this]() { processes().ImportBerlin(); });
 
     processes().Init(TMyForm(this, false));
-    TProcess_Impl_Qt test; 
-    std::cerr << test.ApplicationText() << "\n";
-}
+
+    //Test();
+   }
 
 MainForm::~MainForm()
 {}
+
+/// global variable with the business operations for this application
+TProcess_Impl_Qt proc;
+
+TBusinessOperations& MainForm::processes() { 
+   return proc; 
+   }
+
+TBusinessOperations const& MainForm::processes() const { 
+   return proc; 
+   }
+
+void MainForm::Test() {
+   TProcess_Impl_Qt test;
+   std::cerr << test.ApplicationText() << "\n";
+   }

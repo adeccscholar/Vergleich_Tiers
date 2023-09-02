@@ -56,7 +56,6 @@ void TProcess_Presenter_Impl::InitMainForm(TMyForm&& form, std::string const& st
    catch (std::exception& ex) {
       frm.Message(EMyMessageType::information, "error while prepare application", ex.what());
       }
-   std::clog << "application is successful started and ready\n";
    }
 
 void TProcess_Presenter_Impl::SetMainFormCaption(std::string const& strCaption) {

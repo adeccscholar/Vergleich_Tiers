@@ -1,5 +1,7 @@
 #pragma once
 
+#include "BaseOfProcesses.h"
+
 #include <adecc_Tools/MyError.h>
 #include <adecc_Tools/MyTrace.h>
 
@@ -16,11 +18,11 @@ class TMyForm;
 /**
   \brief Klasse mit den Teilprozessen mit den aktiven Teilprozessen
 */
-class TProcess_Presenter {
+class TProcess_Presenter : virtual public TOperationsBase {
    public:
       using login_return = std::tuple<std::string, std::string, bool>;
 
-      TProcess_Presenter() { Trace("constructor for TProcess_Presenter called"s); }
+      TProcess_Presenter() : TOperationsBase() { Trace("constructor for TProcess_Presenter called"s); }
       TProcess_Presenter(TProcess_Presenter const&) = delete;
       TProcess_Presenter(TProcess_Presenter&& ref) noexcept = delete;
       virtual ~TProcess_Presenter() = default;
@@ -36,4 +38,5 @@ class TProcess_Presenter {
       virtual std::pair<bool, std::string> ChooseFile(std::string const&) = 0;
       virtual void ShowErrorForm(std::string const& caption, std::string const& message, std::string const& details = ""s) = 0;
       virtual void ShowInformationForm(std::string const& caption, std::string const& message, std::string const& details = ""s) = 0;
+      virtual std::expected<bool, MyErrorInfo> ShowQuestionForm(std::string const& caption, std::string const& message, std::string const& details = ""s) = 0;
 };

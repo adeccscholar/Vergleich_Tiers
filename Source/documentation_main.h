@@ -36,6 +36,9 @@ extends beyond mere class definitions. We will also delve into more intricate in
 structures, a feature that can be exclusively leveraged within the C++ realm. Additionally, we 
 will showcase the efficiency gained by implementing templates, leading to significant time savings.
 
+- \subpage pgPresenter "presentation layer"
+- \subpage pgPersistence "database layer"
+
 \section secMainLicense Information about the license for sourcen and documentation
 The licensing terms for the training application are as follows:
 

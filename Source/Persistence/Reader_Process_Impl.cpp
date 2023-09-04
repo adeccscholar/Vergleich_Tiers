@@ -23,7 +23,7 @@ std::string TProcess_Reader_Impl::GetDatabaseInformations(void) const {
 
 std::expected<std::string, MyErrorInfo> TProcess_Reader_Impl::LoginToDb(TMyCredential&& credentials) {
    try {
-      db += credentials;
+      db += std::move(credentials);
       db.Open();
       return { db.GetInformations() };
       }

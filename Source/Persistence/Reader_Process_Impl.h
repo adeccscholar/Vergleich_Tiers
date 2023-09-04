@@ -3,6 +3,9 @@
 #include "Processes/Reader_Process.h"
 #include "adecc_Database/MyDatabase.h"
 
+#include <vector>
+#include <utility>
+
 //template <my_db_credentials credential_ty>
 class TProcess_Reader_Impl : virtual public TProcess_Reader {
    public:
@@ -12,6 +15,9 @@ class TProcess_Reader_Impl : virtual public TProcess_Reader {
 		using concrete_db_connection = TMyDatabase<TMyQtDb, concrete_db_server>;
 		using concrete_query         = TMyQuery<TMyQtDb, concrete_db_server>;
 
+		enum class EEntity_type : int { unknow, table, view };
+		using entity_type_set = std::vector<std::pair<EEntity_type, std::string>>;
+
    private:
 		concrete_db_connection db { };
 	public:
@@ -20,6 +26,9 @@ class TProcess_Reader_Impl : virtual public TProcess_Reader {
 		TProcess_Reader_Impl(TProcess_Reader_Impl&&) noexcept = delete;
 		virtual ~TProcess_Reader_Impl() = default;
 
+		concrete_db_connection& Database() { return db; }
+		concrete_db_connection const& Database() const { return db; }
+
 		virtual bool IsConnectedToDatabase() const {return db.Connected(); }
 	   virtual bool GetServerHasIntegratedSecurity(void) const override;
 	   virtual std::pair<std::string, std::string> GetConnectionInformations(void) const override;
@@ -27,6 +36,6 @@ class TProcess_Reader_Impl : virtual public TProcess_Reader {
 	   virtual std::expected<std::string, MyErrorInfo> LoginToDb(TMyCredential&& credentials) override;
 		virtual void LogoutFromDb(void) override;
 	   
-		void Check() {	delete new TProcess_Reader_Impl; }
    };
 
+using TProcess_Reader_Impl_Test = concrete_process<SubProcessConcrete<TProcess_Reader_Impl, "Test_Db_Imp", "1.0">>;

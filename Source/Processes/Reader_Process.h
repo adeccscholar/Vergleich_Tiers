@@ -4,13 +4,16 @@
 #include <utility>
 #include <expected>
 
+#include "BaseOfProcesses.h"
+
 using namespace std::string_literals;
 
 class TMyCredential;
 
-class TProcess_Reader {
+/// class with interface to common database functions
+class TProcess_Reader : virtual public TOperationsBase {
    public:
-      TProcess_Reader() { Trace("constructor for TProcess_Reader called."s); }
+      TProcess_Reader() : TOperationsBase() { Trace("constructor for TProcess_Reader called."s); }
       TProcess_Reader(TProcess_Reader const&) = delete;
       TProcess_Reader(TProcess_Reader&&) noexcept = delete;
       virtual ~TProcess_Reader() = default;

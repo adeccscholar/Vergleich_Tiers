@@ -14,7 +14,8 @@ public:
 	// RValue Konstruktor, Destruktor, swap
 
 	virtual void ReadBerlinFromFile(std::string const& strFile) override;
-
-	void Check() { delete new TProcess_Migration_Impl; }
 };
+
+using tmp = SubProcessConcrete<TProcess_Migration_Impl, "Test for Migration Subprocess", "1.0">;
+//using TProcess_Migration_Test = concrete_process<tmp>;
 

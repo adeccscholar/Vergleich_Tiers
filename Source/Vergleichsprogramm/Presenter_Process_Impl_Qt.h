@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include "Process.h"
-#include "Persistance/Reader_Process_Impl.h"
+#include "Persistence/Reader_Process_Impl.h"
 #include "Presenter/Presenter_Process_Impl.h"
 
 class  TProcess_Presenter_Impl_Qt : virtual public TProcess_Presenter_Impl {

@@ -5,7 +5,7 @@
 template <my_db_credentials ty>
 ty CreateTest(void) {
    if constexpr (std::is_same<ty, TMyMSSQL>::value) {
-      TMyMSSQL database{ "GeoDaten" };
+      TMyMSSQL database{ "GeoDaten2" };
       return database;
       }
    else if constexpr (std::is_same<ty, TMyMySQL>::value) {

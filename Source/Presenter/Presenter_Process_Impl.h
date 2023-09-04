@@ -29,6 +29,7 @@ public:
    virtual std::pair<bool, std::string> ChooseFile(std::string const&) override;
    virtual void ShowErrorForm(std::string const& caption, std::string const& message, std::string const& details) override;
    virtual void ShowInformationForm(std::string const& caption, std::string const& message, std::string const& details) override;
+   virtual std::expected<bool, MyErrorInfo> ShowQuestionForm(std::string const& caption, std::string const& message, std::string const& details = ""s) override;
 private:
    virtual TMyForm CreateLoginForm(TMyForm& parent) = 0;
 };

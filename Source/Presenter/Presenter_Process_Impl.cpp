@@ -49,8 +49,9 @@ void TProcess_Presenter_Impl::InitMainForm(TMyForm&& form, std::string const& st
       frm.GetAsStream<Narrow, EMyFrameworkType::memo>(old_cerr, "textError");
       frm.GetAsStream<Narrow, EMyFrameworkType::statusbar>(old_clog, "sbMain");
 
-      frm.Set<EMyFrameworkType::button, std::string>("btnLogin"s, "login ...");
-      frm.Set<EMyFrameworkType::button, std::string>("btnImportBln"s, "migrate Berlin ...");
+      frm.Set<EMyFrameworkType::button, std::string>("btnLogin"s,           "login into database ...");
+      frm.Set<EMyFrameworkType::button, std::string>("btnCreateBerlinOld"s, "create structure Berlin (old) ...");
+      frm.Set<EMyFrameworkType::button, std::string>("btnImportBln"s,       "migrate data for Berlin (old) ...");
       frm.Enable<EMyFrameworkType::button>("btnLogin"s, true);
       } 
    catch (std::exception& ex) {
@@ -123,3 +124,19 @@ void TProcess_Presenter_Impl::ShowInformationForm(std::string const& caption, st
    //frm.Message(EMyMessageType::information, caption, message);
    TMyFileDlg::Message(EMyMessageType::information, caption, message, details);
 }
+
+std::expected<bool, MyErrorInfo> TProcess_Presenter_Impl::ShowQuestionForm(std::string const& caption, std::string const& message, std::string const& details) {
+   switch (auto ret = TMyFileDlg::Message(EMyMessageType::question, caption, message, details); ret) {
+      case EMyRetResults::ok:
+      case EMyRetResults::yes:
+         return { true };
+      case EMyRetResults::no:
+         return { false };
+      case EMyRetResults::cancel:
+         return std::unexpected(MyErrorInfo{ EMyErrorType::Userbreak, std::format("{} - user canceled the action", caption), ""s } );
+      default:
+         return std::unexpected(MyErrorInfo{ EMyErrorType::RuntimeError, std::format("{} - unexpected retval from message form", caption), 
+                                             std::format("unexpected retval {} from message form (question)\n{}\n{}\n{}",
+                                                static_cast<int>(ret), ApplicationText(), MyTimeStamp(), MyPosition()) });
+      }
+   }

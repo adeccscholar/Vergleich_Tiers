@@ -112,14 +112,17 @@
     <ClCompile Include="..\Presenter\Presenter_Process_Impl.cpp">
       <Filter>Process - Presenter\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Persistance\Reader_Process_Impl.cpp">
-      <Filter>Process - Persistence\Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\Processes\BusinessOperations.cpp">
       <Filter>Processes\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\Migration\Migration_Process_Impl.cpp">
       <Filter>Process - Migration\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Persistence\Reader_Process_Impl.cpp">
+      <Filter>Process - Persistence\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Persistence\Reader_Create_Db_Impl.cpp">
+      <Filter>Process - Persistence\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -158,12 +161,6 @@
     </ClInclude>
     <ClInclude Include="..\Presenter\Presenter_Process_Impl.h">
       <Filter>Process - Presenter\Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Persistance\Reader_Process_Impl.h">
-      <Filter>Process - Persistence\Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Persistance\Reader_Process_Database_Params.h">
-      <Filter>Process - Persistence\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\System\MyGeoLocation.h">
       <Filter>System\Header Files</Filter>
@@ -210,14 +207,26 @@
     <ClInclude Include="..\Processes\Reader_System_Db.h">
       <Filter>Processes\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Persistance\Reader_Create_Db_Impl.h">
+    <ClInclude Include="..\Persistence\documentation_persistence.h">
       <Filter>Process - Persistence\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Persistance\Reader_Overview_Db_Impl.h">
+    <ClInclude Include="..\Persistence\Reader_Create_Db_Impl.h">
       <Filter>Process - Persistence\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Persistance\Reader_System_Db_Impl.h">
+    <ClInclude Include="..\Persistence\Reader_Overview_Db_Impl.h">
       <Filter>Process - Persistence\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Persistence\Reader_Process_Database_Params.h">
+      <Filter>Process - Persistence\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Persistence\Reader_Process_Impl.h">
+      <Filter>Process - Persistence\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Persistence\Reader_System_Db_Impl.h">
+      <Filter>Process - Persistence\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Processes\BaseOfProcesses.h">
+      <Filter>Processes\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

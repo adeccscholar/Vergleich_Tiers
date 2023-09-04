@@ -1,9 +1,9 @@
 ﻿#pragma once
 
 #include "Processes/Process.h"
-#include "Persistance/Reader_Create_Db_Impl.h"
-#include "Persistance/Reader_System_Db_Impl.h"
-#include "Persistance/Reader_Overview_Db_Impl.h"
+#include "Persistence/Reader_Create_Db_Impl.h"
+#include "Persistence/Reader_System_Db_Impl.h"
+#include "Persistence/Reader_Overview_Db_Impl.h"
 #include "Presenter/Presenter_Process_Impl.h"
 #include "Migration/Migration_Process_Impl.h"
 

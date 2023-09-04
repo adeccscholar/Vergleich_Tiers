@@ -8,6 +8,9 @@ TProcess::TProcess() : Process_Base() {
 	}
 
 
+std::string TProcess::ApplicationVersion(void) const {
+	return std::format("{}.{}", TBusinessOperations::ApplicationVersion(), iBuild);
+   }
 
 std::string TProcess::ApplicationText(void) const {
 	return std::format("{} ({})", TBusinessOperations::ApplicationText(), iBuild);
@@ -84,7 +87,59 @@ void TProcess::Login(void) {
 	   }
    }
 
-void TProcess::ImportBerlin(void) {
+/**
+ * @brief create the structure for the old data model for Berlin into selected database
+ * @details In this method, the tables and views are created in order to be able to store the Berlin data 
+ *          in the database in the old database model.
+ * @param  
+ * @return
+*/
+void TProcess::CreateStructureBlnOld(void) {
+	const std::string strTheme{"create structure for Berlin"s };
+	auto [strDatabase, strServerType] = GetConnectionInformations();
+	std::clog << std::format("{} in Database {} / {}\n", strTheme, strDatabase, strServerType);
+   if(auto ret = HasDbStructureForBerlin(); ret.has_value()) {
+		if(ret.value().first == true) {
+			auto ret_question = ShowQuestionForm(strTheme, "do you want drop existing views and tables"s, 
+				                                  std::format("database: {} / {}\n\n{}", strDatabase, strServerType, ret.value().second));
+			if (ret_question.has_value()) {
+				if (ret_question.value() == true) { 
+					if(auto ret_drop = DropDbStructureForBerlin(); !ret_drop.has_value()) {
+						auto const& [error, msg, details] = ret_question.error();
+						ShowErrorForm(strTheme, "Failed to delete the existing tables and views.",
+							           std::format("{}\n{}\n\nactual position\n{}\nApplication: {}",
+							                       msg, details, MyPosition(), ApplicationText()));
+						return;
+					   }
+				   }
+			   }
+			else {
+				auto const& [error, msg, details] = ret_question.error();
+				ShowErrorForm(strTheme, "The building of the Berlin data structure was canceled by the user",
+					           std::format("{}\n{}\n\nactual position\n{}\nApplication: {}",
+					                       msg, details, MyPosition(), ApplicationText()));
+				return;
+			   }
+		   }
+		if(auto ret_execute = CreateDbStructureForBerlin(); ret_execute.has_value()) {
+			ShowInformationForm(strTheme, "The database structures have been successfully created.", "");
+		   }
+		else {
+			auto const& [error, msg, details] = ret_execute.error();
+			ShowErrorForm(strTheme, "Error encountered while executing the statements for creating the database structure.",
+				std::format("{}\n{}\n\nactual position\n{}\nApplication: {}",
+				            msg, details, MyPosition(), ApplicationText()));
+		   }
+	   }
+	else {
+		auto const& [error, msg, details] = ret.error();
+		ShowErrorForm("Create Structure for Berlin"s, msg, std::format("{}\n\nactual position\n{}\nApplication: {}", 
+			           details, MyPosition(), ApplicationText()));
+	   }
+   }
+
+
+void TProcess::ImportBerlinOld(void) {
 	std::clog << "importing data for Berlin\n";
 	auto [ret, strFile] = ChooseFile("d:\\test");
 	if (ret) {

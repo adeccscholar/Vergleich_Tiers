@@ -70,6 +70,13 @@
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="btnCreateBerlinOld">
+         <property name="text">
+          <string>btnCreateBerlinOld</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="btnImportBln">
          <property name="text">
           <string>btnImportBln</string>
@@ -103,6 +110,40 @@
      <height>22</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menu_File">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <addaction name="actLoginDatabase"/>
+    <addaction name="actExit"/>
+   </widget>
+   <widget class="QMenu" name="menu_Create">
+    <property name="title">
+     <string>&amp;Create</string>
+    </property>
+    <widget class="QMenu" name="menu_Berlin">
+     <property name="title">
+      <string>&amp;Berlin</string>
+     </property>
+     <addaction name="actCreateBlnOld"/>
+    </widget>
+    <addaction name="menu_Berlin"/>
+   </widget>
+   <widget class="QMenu" name="menu_Import">
+    <property name="title">
+     <string>&amp;Import</string>
+    </property>
+    <widget class="QMenu" name="menu_Berlin_2">
+     <property name="title">
+      <string>&amp;Berlin</string>
+     </property>
+     <addaction name="actImportBlnOld"/>
+    </widget>
+    <addaction name="menu_Berlin_2"/>
+   </widget>
+   <addaction name="menu_File"/>
+   <addaction name="menu_Create"/>
+   <addaction name="menu_Import"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -113,6 +154,30 @@
    </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
+  <action name="actLoginDatabase">
+   <property name="icon">
+    <iconset theme="document-open">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Login</string>
+   </property>
+  </action>
+  <action name="actExit">
+   <property name="text">
+    <string>E&amp;xit</string>
+   </property>
+  </action>
+  <action name="actCreateBlnOld">
+   <property name="text">
+    <string>Berlin (&amp;old)</string>
+   </property>
+  </action>
+  <action name="actImportBlnOld">
+   <property name="text">
+    <string>Berlin (old)</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>

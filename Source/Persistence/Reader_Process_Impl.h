@@ -29,13 +29,14 @@ class TProcess_Reader_Impl : virtual public TProcess_Reader {
 		concrete_db_connection& Database() { return db; }
 		concrete_db_connection const& Database() const { return db; }
 
-		virtual bool IsConnectedToDatabase() const {return db.Connected(); }
-	   virtual bool GetServerHasIntegratedSecurity(void) const override;
-	   virtual std::pair<std::string, std::string> GetConnectionInformations(void) const override;
-		virtual std::string GetDatabaseInformations(void) const override;
-	   virtual std::expected<std::string, MyErrorInfo> LoginToDb(TMyCredential&& credentials) override;
+		[[nodiscard]] virtual bool IsConnectedToDatabase() const {return db.Connected(); }
+		[[nodiscard]] virtual bool GetServerHasIntegratedSecurity(void) const override;
+		[[nodiscard]] virtual std::pair<std::string, std::string> GetConnectionInformations(void) const override;
+		[[nodiscard]] virtual std::string GetDatabaseInformations(void) const override;
+		[[nodiscard]] virtual std::expected<std::string, MyErrorInfo> LoginToDb(TMyCredential&& credentials) override;
 		virtual void LogoutFromDb(void) override;
 	   
+		//virtual void Test() = 0;
    };
 
 using TProcess_Reader_Impl_Test = concrete_process<SubProcessConcrete<TProcess_Reader_Impl, "Test_Db_Imp", "1.0">>;

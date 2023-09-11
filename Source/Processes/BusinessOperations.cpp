@@ -17,6 +17,6 @@ std::string TBusinessOperations::ApplicationVersion(void) const {
 }
 
 std::string TBusinessOperations::ApplicationText(void) const {
-   return std::format("{} {}.{}", strApplication, iMajorVersion, iMinorVersion);
+   return std::format("{} {}.{} ({})", strApplication, iMajorVersion, iMinorVersion, BuildNumber());
    }
 

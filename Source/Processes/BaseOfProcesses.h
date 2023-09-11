@@ -3,6 +3,7 @@
 #include <adecc_Tools/MyTrace.h>
 #include <string>
 #include <format>
+#include <type_traits>
 
 using namespace std::string_literals;
 
@@ -22,6 +23,7 @@ class TOperationsBase {
 		virtual std::string Application(void) const = 0;
 		virtual std::string ApplicationVersion(void) const = 0;
 		virtual std::string ApplicationText(void) const = 0;
+		virtual int         BuildNumber(void) const = 0;
    };
 
 
@@ -35,8 +37,14 @@ struct MyHlpString {
 template<unsigned N> MyHlpString(char const (&)[N]) -> MyHlpString<N - 1>;
 
 
-
-template <typename sub_process_class, MyHlpString App, MyHlpString Version>
+/**
+ * @brief Helper class to concretize completed sub-processes
+ * @details A helper class that inherits from proc_ty and sub_process_class and
+ * provides the abstract methods of TOperationsBase horizontally.
+ * @tparam proc_ty The type of the processing interface.
+ * @tparam proc_impl_types The list of processing implementation types.
+ */
+template <typename sub_process_class, MyHlpString App, MyHlpString Version, size_t Build = 1>
 	requires std::is_base_of_v<TOperationsBase, sub_process_class>
 class SubProcessConcrete : virtual public TOperationsBase, virtual public sub_process_class {
    public:
@@ -51,9 +59,8 @@ class SubProcessConcrete : virtual public TOperationsBase, virtual public sub_pr
 	   virtual std::string Application(void) const override { return std::string(App); }
 	   virtual std::string ApplicationVersion(void) const override { return std::string(Version); }
 	   virtual std::string ApplicationText(void) const override { return Application() + " (" + ApplicationVersion() + ")"; }
+		virtual int         BuildNumber(void) const override { return static_cast<int>(Build); }
 };
-
-
 
 
 /** \brief Concept process_type defined to check process classes to guarantee that all constraints that we formulate for

@@ -10,8 +10,6 @@
 #include "Migration_Process.h"
 #include <adecc_Tools/MyTrace.h>
 
-#include <type_traits>
-
 #include <iostream>
 
 
@@ -42,8 +40,7 @@ class TProcess : virtual public Process_Base {
 		/// \}
 
 
-		virtual std::string ApplicationVersion(void) const override;
-		virtual std::string ApplicationText(void) const override;
+		virtual int         BuildNumber(void) const override;
 
 		/**
 		 * @name overridden abstact methods from TBusinessOperations

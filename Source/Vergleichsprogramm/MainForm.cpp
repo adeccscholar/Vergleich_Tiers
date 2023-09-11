@@ -51,4 +51,6 @@ void MainForm::Test() {
    TProcess_Reader_Impl_Test test2;
    std::cerr << test2.ApplicationText() << "\n";
 
+   TMyGeoLocation<double> loc(23.0, 13.1 );
+
    }

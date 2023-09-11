@@ -24,12 +24,13 @@ class TProcess_Reader : virtual public TOperationsBase {
  
       /// @name Section with the methods representing general database functions
       /// \{
-      virtual bool IsConnectedToDatabase() const = 0;
-      virtual bool GetServerHasIntegratedSecurity() const = 0;
-      virtual std::pair<std::string, std::string> GetConnectionInformations() const = 0;
-      virtual std::string GetDatabaseInformations(void) const = 0;
-      virtual std::expected<std::string, MyErrorInfo> LoginToDb(TMyCredential&&) = 0;
+      [[nodiscard]] virtual bool IsConnectedToDatabase() const = 0;
+      [[nodiscard]] virtual bool GetServerHasIntegratedSecurity() const = 0;
+      [[nodiscard]] virtual std::pair<std::string, std::string> GetConnectionInformations() const = 0;
+      [[nodiscard]] virtual std::string GetDatabaseInformations(void) const = 0;
+      [[nodiscard]] virtual std::expected<std::string, MyErrorInfo> LoginToDb(TMyCredential&&) = 0;
       virtual void LogoutFromDb() = 0;
-
+      
+      //virtual void Test() = 0;
       /// \}
 };

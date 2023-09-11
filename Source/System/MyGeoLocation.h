@@ -19,6 +19,7 @@ inline std::ostream& operator << (std::ostream& out, myGeoMercatorETRS89<ty> con
    return out;
 }
 
+enum class GeoSys : int { gps, eptk };
 
 /**
  * @brief Floating point data type to be used for storing the geographic position.
@@ -37,13 +38,20 @@ struct TMyGeoLocation : public std::pair<ty, ty> {
       }
 
    TMyGeoLocation(ty const& a, ty const& b) {
-      static_assert(std::is_floating_point<ty>::value == true, "wrong type for Location");
+     // static_assert(std::is_floating_point<ty>::value == true, "wrong type for Location");
       this->first = a; this->second = b;
       }
 
    TMyGeoLocation(void) : TMyGeoLocation(0.0, 0.0) { }
    TMyGeoLocation(TMyGeoLocation const&) = default;
    TMyGeoLocation(TMyGeoLocation&& ref) noexcept { swap(ref); };
+
+   template <GeoSys kind>
+   TMyGeoLocation(std::pair<ty, ty> const& loc) {
+      if constexpr (kind == GeoSys::gps) {
+         this->first = loc.first; this->second = loc.second;
+         }
+      }
 
    TMyGeoLocation(myGeoETRS89<ty> const& loc) {
       auto val = ConvertETRS89ToWGS84(loc);
@@ -187,23 +195,23 @@ template <typename ty, std::enable_if_t<std::is_floating_point<ty>::value, bool>
 using Result = std::pair<ty, ty>;
 
 
-template< typename ty>
+template< std::floating_point ty>
 inline Result<ty> Calculate(TMyGeoLocation<ty> const& pointA, TMyGeoLocation<ty> const& pointB) {
-   static constexpr auto my_round = [](double const& val) {
+   static constexpr auto my_round = [](ty const& val) {
       return std::round(val * 1000.0) / 1000.0;
    };
 
-   static const double r = 6371000.785;                     //< mean radius of the earth
-   static constexpr double pi = std::numbers::pi_v<double>;
-   static const double w1 = pi / 180.0;
-   static const double w2 = 180.0 / pi;
+   static const ty r = 6371000.785;                     //< mean radius of the earth
+   static constexpr ty pi = std::numbers::pi_v<double>;
+   static const ty w1 = pi / 180.0;
+   static const ty w2 = 180.0 / pi;
 
-   double phiA = pointA.first * w1; /// 180.0 * M_PI;
-   double lambdaA = pointA.second * w1; /// 180.0 * M_PI;
-   double phiB = pointB.first * w1; /// 180.0 * M_PI;
-   double lambdaB = pointB.second * w1; /// 180.0 * M_PI;
-   double zeta = std::acos(std::sin(phiA) * std::sin(phiB) + std::cos(phiA) * std::cos(phiB) * std::cos(lambdaB - lambdaA));
-   double alpha = std::acos((std::sin(phiB) - std::sin(phiA) * std::cos(zeta)) / (std::cos(phiA) * std::sin(zeta)));
+   ty phiA = pointA.first * w1; /// 180.0 * M_PI;
+   ty lambdaA = pointA.second * w1; /// 180.0 * M_PI;
+   ty phiB = pointB.first * w1; /// 180.0 * M_PI;
+   ty lambdaB = pointB.second * w1; /// 180.0 * M_PI;
+   ty zeta = std::acos(std::sin(phiA) * std::sin(phiB) + std::cos(phiA) * std::cos(phiB) * std::cos(lambdaB - lambdaA));
+   ty alpha = std::acos((std::sin(phiB) - std::sin(phiA) * std::cos(zeta)) / (std::cos(phiA) * std::sin(zeta)));
    if (std::isnan(alpha)) {
       alpha = (std::sin(phiB) - std::sin(phiA) * std::cos(zeta)) / (std::cos(phiA) * std::sin(zeta)) < -1.0 ? 180.0 : 0.0;
    }

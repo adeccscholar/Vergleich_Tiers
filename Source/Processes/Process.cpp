@@ -8,14 +8,9 @@ TProcess::TProcess() : Process_Base() {
 	}
 
 
-std::string TProcess::ApplicationVersion(void) const {
-	return std::format("{}.{}", TBusinessOperations::ApplicationVersion(), iBuild);
+int TProcess::BuildNumber(void) const {
+	return iBuild;
    }
-
-std::string TProcess::ApplicationText(void) const {
-	return std::format("{} ({})", TBusinessOperations::ApplicationText(), iBuild);
-   }
-
 
 std::string TProcess::CaptionForMainForm(void) const {
 	if (!boProcessIsInitialized) {
@@ -56,8 +51,7 @@ void TProcess::Login(void) {
 				std::clog << std::format("application \"{}\" connected successful to {} / {}.\n", ApplicationText(), strDatabase, strServerType);
 			   }
 		   else { 
-				auto const& [errorcode, msg, details] = ret.error();
-				Trace(std::format("application \"{}\" not connected ...", ApplicationText()));
+				auto const& [errorcode, msg, details] = AddTrace(ret.error(), "Login to database failed.");
 				ShowErrorForm(strTheme, msg, details);
 				std::clog << msg << '\n';
 			   }
@@ -76,7 +70,6 @@ void TProcess::Login(void) {
 			   default:
 					call_msg_dlg = std::bind(&TProcess_Presenter::ShowErrorForm, this, std::cref(strTheme), std::cref(message), std::cref(details));
 			   }
-			Trace(std::format("application \"{}\" not connected to database {} at {}, {}", ApplicationText(), strDatabase, strServerType, message));
 			call_msg_dlg();
 		   }
 		SetMainFormCaption(CaptionForMainForm());

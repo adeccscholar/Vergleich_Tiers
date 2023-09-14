@@ -41,5 +41,5 @@ class TBusinessOperations : virtual public TOperationsBase  {
 		/// Reading the file with the open data information for Berlin and importing them into the database
 		virtual void ImportBerlinOld(void) = 0;
 
-		//virtual void Test(void) = 0;
+		// virtual void Test(void) = 0;
    };

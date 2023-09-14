@@ -158,7 +158,10 @@
     <ClInclude Include="..\Processes\Reader_Overview_Db.h" />
     <ClInclude Include="..\Processes\Reader_Process.h" />
     <ClInclude Include="..\Processes\Reader_System_Db.h" />
+    <ClInclude Include="..\System\MyAngle.h" />
+    <ClInclude Include="..\System\MyDistance.h" />
     <ClInclude Include="..\System\MyGeoLocation.h" />
+    <ClInclude Include="..\System\MyPoint.h" />
     <ClInclude Include="Presenter_Process_Impl_Qt.h" />
     <ClInclude Include="Process_Impl_Qt.h" />
     <QtMoc Include="UserDlg.h" />

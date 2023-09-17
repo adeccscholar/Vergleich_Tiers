@@ -12,7 +12,7 @@ template <typename ty>
 concept my_integral_param = std::is_integral_v<ty> && !std::is_same_v<ty, bool>;
 
 template <typename ty>
-concept my_angle_param = std::is_floating_point_v<ty> || (std::is_integral_v<ty> && !std::is_same_v<ty, bool>);
+concept my_angle_param = std::is_floating_point_v<ty> || my_integral_param<ty>;
 
 /** @todo checks für Manipulatoren ergänzen
 *         Kostruktor für MyAngle<ty, ?> mit MySexagesimalAngle<ty>
@@ -26,29 +26,39 @@ enum class MyAngleKind : int { degree, radian };
 template<typename T>
 inline constexpr bool always_false_angle = false;
 
+template <typename ty>
+concept my_param_angle = std::is_floating_point_v<ty> || (std::is_integral_v<ty> && !std::is_same_v<ty, bool>);
 
-template <std::floating_point ty = double, MyAngleKind kind = MyAngleKind::degree>
+template <typename ty, MyAngleKind kind>
+concept my_param_angle_Valid = (kind == MyAngleKind::degree) || std::is_floating_point_v<ty>;
+
+template <my_param_angle ty = double, MyAngleKind kind = MyAngleKind::degree>
+   requires my_param_angle_Valid<ty, kind>
 class MyAngle {
    friend std::ostream& operator << (std::ostream& out, MyAngle<ty, kind> const& angle) {
       return out << static_cast<ty>(angle) << " " << angle.unit();
       }
 
-   template <MyAngleKind oth_knd, std::floating_point oth_ty = ty>
+   template <MyAngleKind oth_knd, my_param_angle oth_ty = ty>
+      requires my_param_angle_Valid<oth_ty, oth_knd>
    friend MyAngle<ty, kind> operator + (MyAngle<ty, kind> const& lhs, MyAngle<oth_ty, oth_knd> const& rhs) {
       return MyAngle<ty, kind> { lhs } += rhs.convert_to<kind, ty>();
       }
 
-   template <MyAngleKind oth_knd, std::floating_point oth_ty = ty>
+   template <MyAngleKind oth_knd, my_param_angle oth_ty = ty>
+      requires my_param_angle_Valid<oth_ty, oth_knd>
    friend MyAngle<ty, kind> operator - (MyAngle<ty, kind> const& lhs, MyAngle<oth_ty, oth_knd> const& rhs) {
       return MyAngle<ty, kind> { lhs } -= rhs.convert_to<kind, ty>();
       }
 
    template <my_angle_param oth_ty>
+      requires my_param_angle_Valid<oth_ty, oth_knd>
    friend MyAngle<ty, kind> operator * (MyAngle<ty, kind> const& lhs, oth_ty const& rhs) {
       return MyAngle<ty, kind> { lhs } *= rhs;
       }
 
    template <my_angle_param oth_ty>
+      requires my_param_angle_Valid<oth_ty, oth_knd>
    friend MyAngle<ty, kind> operator / (MyAngle<ty, kind> const& lhs, oth_ty const& rhs) {
       return MyAngle<ty, kind> { lhs } /= rhs;
       }
@@ -135,14 +145,14 @@ class MyAngle {
          else static_assert(always_false_angle<kind>, "invalid kind of angle for operator std::string");
          }
 
-      template <MyAngleKind oth_knd, std::floating_point oth_ty = ty>
+      template <MyAngleKind oth_knd, my_angle_param oth_ty>
       MyAngle& operator += (MyAngle<oth_ty, oth_knd> const& other) {
          flAngle += create_from<oth_knd>(other).Angle();
          Normalize();
          return *this;
          }
 
-      template <MyAngleKind oth_knd, std::floating_point oth_ty = ty>
+      template <MyAngleKind oth_knd, my_angle_param oth_ty>
       MyAngle& operator -= (MyAngle<oth_ty, oth_knd> const& other) {
          flAngle -= create_from<oth_knd>(other).Angle();
          Normalize();
@@ -179,7 +189,14 @@ class MyAngle {
       //*/
 
       /// selector for the datalement with the value of the angle in the unit
-      constexpr ty const& Angle(void) const { return flAngle; }
+
+      template <MyAngleKind oth_knd = kind>
+      constexpr std::conditional_t<oth_knd == kind, ty const&, ty> Angle(void) const {
+         if constexpr (oth_knd == kind) return flAngle;
+         else if constexpr (oth_knd == MyAngleKind::degree && kind == MyAngleKind::radian) return flAngle * 180.0 / std::numbers::pi_v<ty>; 
+         else if constexpr (oth_knd == MyAngleKind::radian && kind == MyAngleKind::degree) return flAngle * std::numbers::pi_v<ty> / 180.0;
+         else static_assert(always_false_angle<kind>, "invalid kind of angle");
+         }
 
       constexpr std::string unit(void) const {
          if constexpr (kind == MyAngleKind::degree) return "deg"s;
@@ -233,26 +250,30 @@ class MyAngle {
          else static_assert(always_false_angle<kind>, "invalid kind of angle in Normalize");
          }
 
-      bool Check(ty minAngle = 0, ty maxAngle = (kind == MyAngleKind::degree) ? 360 : 2 * std::numbers::pi_v<ty>) {
-         if (minAngle < 0 || maxAngle > ((kind == MyAngleKind::degree) ? 360 : 2 * std::numbers::pi_v<ty>)) {
-            throw std::invalid_argument("a parameter for check an angle is out of range");
-            }
-         if constexpr (kind == MyAngleKind::degree) {
-            return (flAngle >= minAngle && flAngle <= maxAngle);
-            }
-         else {
-            return (flAngle >= minAngle && flAngle <= maxAngle);
-            }
+
+      template <typename oth_ty = ty>
+         requires (kind == MyAngleKind::degree)
+      bool Check(ty minAngle = 0, ty maxAngle = 360) {
+         if (minAngle < 0 || maxAngle > 360) {
+            throw std::invalid_argument("A parameter for checking an angle is out of range");
          }
-  
+         return (flAngle >= minAngle && flAngle <= maxAngle);
+         }
+
+
+      template <typename oth_ty = ty>
+         requires (kind == MyAngleKind::radian) && std::floating_point<ty>
+      bool Check(ty minAngle = 0, ty maxAngle = 2 * std::numbers::pi_v<ty>) {
+         if (minAngle < 0 || maxAngle > 2 * std::numbers::pi_v<ty>) {
+            throw std::invalid_argument("A parameter for checking an angle is out of range");
+            }
+         return (flAngle >= minAngle && flAngle <= maxAngle);
+         }
 
 
 
-
-
-
-      template <MyAngleKind other_kind = kind, typename = std::enable_if_t<other_kind == MyAngleKind::degree>>
-      void fromRadians(ty const& val) { flAngle = convert<MyAngleKind::radian>(val); }
+      template <MyAngleKind other_knd = kind, std::floating_point oth_ty, typename = std::enable_if_t<other_knd == MyAngleKind::degree>>
+      void fromRadians(oth_ty const& val) { flAngle = convert<MyAngleKind::radian>(val); }
 
       template <std::floating_point oth_ty = ty>
       auto sin(void) const {
@@ -341,36 +362,43 @@ class MyAngle {
             static_assert(always_false_angle<kind>, "invalid kind of angle in convert_to");
             }
          }
+
    };
 
 
-MyAngle<double, MyAngleKind::degree> operator""_deg(long double val) {
+// ----------------------------------------------------------------------------------
+/**  namespace to isolate the literals for angles
+*/
+namespace my_angle_literals {
+
+inline MyAngle<double, MyAngleKind::degree> operator""_deg(long double val) {
    return MyAngle<double, MyAngleKind::degree>(static_cast<double>(val));
    }
 
-MyAngle<double, MyAngleKind::radian> operator""_rad(long double val) {
+inline MyAngle<double, MyAngleKind::radian> operator""_rad(long double val) {
    return MyAngle<double, MyAngleKind::radian>(static_cast<double>(val));
    }
 
-template <my_integral_param ty>
-class MySexagesimalAngle : public std::tuple<ty, ty, ty> {
+} // end of namespace my_angle_literals
 
-   friend std::ostream& operator << (std::ostream& out, MySexagesimalAngle<ty> const data) {
-      return out << std::setw(3) << std::right << data.Degrees() << "° "
-         << std::setw(2) << std::right << data.Minutes() << "\' "
-         << std::setw(2) << std::right << data.Seconds() << "\"";
-   }
+
+template <my_integral_param ty, my_angle_param sec_ty = ty>
+class MySexagesimalAngle : public std::tuple<ty, ty, sec_ty> {
+
+   friend std::ostream& operator << (std::ostream& out, MySexagesimalAngle<ty, sec_ty> const data) {
+      out << std::setw(3) << std::right << data.Degrees() << "° "
+          << std::setw(2) << std::right << data.Minutes() << "\' ";
+      if constexpr (std::is_integral_v<sec_ty>) out << std::setw(2) << std::right << data.Seconds();
+      else out << std::setprecision(6) << data.Seconds();
+      return out << "\"";
+      }
 
 public:
    MySexagesimalAngle(void) = default;
    MySexagesimalAngle(MySexagesimalAngle const&) = default;
    MySexagesimalAngle(MySexagesimalAngle&&) noexcept = default;
 
-   MySexagesimalAngle(ty const& deg, ty const& min, ty const& sec) : std::tuple<ty, ty, ty>(deg, min, sec) { }
-   //  std::get<0>(*this) = deg;
-   //  std::get<1>(*this) = min;
-   //  std::get<2>(*this) = sec;
-   //  }
+   MySexagesimalAngle(ty const& deg, ty const& min, sec_ty const& sec) : std::tuple<ty, ty, sec_ty>(deg, min, sec) { }
 
    MySexagesimalAngle(std::string const& input) { Parse(input); }
 
@@ -390,29 +418,35 @@ public:
    template <std::floating_point param_ty = double>
    operator MyAngle<param_ty, MyAngleKind::degree>() const { return MyAngle<param_ty, MyAngleKind::degree>(DegreesAsDecimal()); }
 
-   operator std::string() const { return std::format("{:3d}° {:2d}\' {:3d}\"", Degrees(), Minutes(), Seconds()); }
+   operator std::string() const { 
+      if constexpr (std::is_integral_v<sec_ty>)
+         return std::format("{:3d}° {:2d}\' {:3d}\"", Degrees(), Minutes(), Seconds()); 
+      else
+         return std::format("{:3d}° {:2d}\' {:.6f}\"", Degrees(), Minutes(), Seconds());
+      }
 
    auto operator <=> (MySexagesimalAngle const&) const = default;
 
-   ty const& Degrees(void) const { return std::get<0>(*this); }
-   ty const& Minutes(void) const { return std::get<1>(*this); }
-   ty const& Seconds(void) const { return std::get<2>(*this); }
+   ty     const& Degrees(void) const { return std::get<0>(*this); }
+   ty     const& Minutes(void) const { return std::get<1>(*this); }
+   sec_ty const& Seconds(void) const { return std::get<2>(*this); }
 
    template <std::floating_point param_ty = double>
    param_ty DegreesAsDecimal(void) const { return static_cast<param_ty>((Seconds() / 60.0 + Minutes()) / 60.0 + Degrees()); }
 
    void Degrees(ty const& val) { std::get<0>(*this) = val; }
    void Minutes(ty const& val) { std::get<1>(*this) = val; }
-   void Seconds(ty const& val) { std::get<2>(*this) = val; }
+   void Seconds(sec_ty const& val) { std::get<2>(*this) = val; }
+
+   void Degrees(std::string_view val) { auto result = std::from_chars(val.data(), val.data() + val.size(), std::get<0>(*this)); }
+   void Minutes(std::string_view val) { auto result = std::from_chars(val.data(), val.data() + val.size(), std::get<1>(*this)); }
+   void Seconds(std::string_view val) { auto result = std::from_chars(val.data(), val.data() + val.size(), std::get<2>(*this)); }
 
    template <std::floating_point param_ty = double>
    void DegreesAsDecimal(param_ty const& val) {
       param_ty tmp{ val };
       Degrees(std::floor(tmp));
-      //tmp -= Degrees();
-      //tmp *= 60;
       Minutes(std::floor((tmp -= Degrees()) *= 60));
-      //(tmp -= Minutes()) *= 60;
       Seconds(std::round((tmp -= Minutes()) *= 60));
    }
 private:
@@ -426,11 +460,7 @@ private:
       switch (auto ret = std::string_view{ input.begin(), input.end() }
          | std::views::split(' ')
          | std::views::filter([](auto token) { return !token.empty(); })
-         | std::views::transform([](auto token) {
-            ty num = 0;
-            for (char c : token) { if (std::isdigit(c)) { (num *= 10) += (c - '0'); } }
-            return num;
-            })
+         | std::views::transform([](auto token) { return std::string_view{ token.begin(), token.end() }; })
          | std::ranges::to<std::vector>(); ret.size()) {
       case 3: Seconds(ret[2]);
          [[fallthrough]];
@@ -441,6 +471,4 @@ private:
       default: throw std::invalid_argument("invalid argument for parse Angle "s + para + "."s);
       }
    }
-
-
 };

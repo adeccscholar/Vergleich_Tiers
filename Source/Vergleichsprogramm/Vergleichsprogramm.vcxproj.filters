@@ -75,6 +75,9 @@
     <Filter Include="adecc Tools">
       <UniqueIdentifier>{a385c36a-0305-42dd-a4e8-5fc8dd965820}</UniqueIdentifier>
     </Filter>
+    <Filter Include="System\Test">
+      <UniqueIdentifier>{adf31685-aa1e-420b-b272-eba84507051d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="MainForm.qrc">
@@ -123,6 +126,12 @@
     </ClCompile>
     <ClCompile Include="..\Persistence\Reader_Create_Db_Impl.cpp">
       <Filter>Process - Persistence\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Test4Process.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\System\Test\Test4System.cpp">
+      <Filter>System\Test</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -236,6 +245,12 @@
     </ClInclude>
     <ClInclude Include="..\System\MyPoint.h">
       <Filter>System\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Test4Process.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\System\Test\Test4System.h">
+      <Filter>System\Test</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

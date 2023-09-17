@@ -35,6 +35,12 @@
        </property>
       </widget>
       <widget class="QTextEdit" name="textError">
+       <property name="font">
+        <font>
+         <family>Courier New</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
        <property name="lineWrapMode">
         <enum>QTextEdit::NoWrap</enum>
        </property>

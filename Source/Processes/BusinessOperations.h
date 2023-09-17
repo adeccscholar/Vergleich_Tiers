@@ -18,7 +18,7 @@ class TBusinessOperations : virtual public TOperationsBase  {
 		TBusinessOperations();
 		TBusinessOperations(TBusinessOperations const&) = delete;
 		TBusinessOperations(TBusinessOperations&&) noexcept = delete;
-		virtual ~TBusinessOperations(void) = default;
+		virtual ~TBusinessOperations(void);
 
 		TBusinessOperations& operator = (TBusinessOperations const&) = delete;
 		TBusinessOperations& operator = (TBusinessOperations&&) noexcept = delete;

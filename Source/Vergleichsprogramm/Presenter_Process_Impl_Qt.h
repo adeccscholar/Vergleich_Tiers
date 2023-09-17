@@ -19,4 +19,4 @@ private:
 
 };
 
-
+using TProcess_Presenter_Impl_Qt_Test = concrete_process<SubProcessConcrete<TProcess_Presenter_Impl_Qt, "Test_Qt_Imp", "1.0">>;

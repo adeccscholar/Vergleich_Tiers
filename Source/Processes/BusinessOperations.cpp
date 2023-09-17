@@ -8,6 +8,10 @@ TBusinessOperations::TBusinessOperations(void) : TOperationsBase() {
    Trace("constructor for TBusinessOperations called."s);
    }
 
+TBusinessOperations::~TBusinessOperations(void) {
+  // Trace("destructor for TBusinessOperations called."s);
+   }
+
 std::string TBusinessOperations::Application(void) const {
    return strApplication;
 }

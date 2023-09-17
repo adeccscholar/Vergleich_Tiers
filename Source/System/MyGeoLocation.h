@@ -33,14 +33,18 @@ enum class MyGeodeticRefType : int { WGS84, ETRS89, MercatorETRS89 };
 
 template <std::floating_point ty>
 class MyWGS84 : std::pair<MyAngle<ty, MyAngleKind::degree>, MyAngle<ty, MyAngleKind::degree>> {
-   
+   friend std::ostream& operator << (std::ostream& out, MyWGS84 const& data) {
+                 return out << "(" << std::setprecision(6) << data.Longitude().Angle() << ", "
+                            << data.Latitude().Angle() << ")";
+                 }
+
 public:
    using arc_ty = MyAngle<ty, MyAngleKind::degree>;
 
    MyWGS84(void) = default;
    MyWGS84(MyWGS84 const&) = default;
    MyWGS84(MyWGS84&&) noexcept = default;
-   //MyWGS84(ty const& lon, ty const& lat) : std::pair<arc_ty, arc_ty>(lon, lat) { }
+   MyWGS84(ty const& lon, ty const& lat) : std::pair<arc_ty, arc_ty>(arc_ty(lon), arc_ty(lat)) { }
    MyWGS84(arc_ty const& lon, arc_ty const& lat) : std::pair<arc_ty, arc_ty>(lon, lat) { }
    MyWGS84(arc_ty && lon, arc_ty && lat) : std::pair<arc_ty, arc_ty>(lon, lat) { }
 
@@ -87,7 +91,7 @@ public:
 
 
 template <std::floating_point ty>
-class MyMercatorETRS89 : public MyPoint<ty> {// std::pair<ty, ty> {
+class MyMercatorETRS89 : public MyPoint<ty, 2> {// std::pair<ty, ty> {
 public:
    constexpr MyMercatorETRS89(void) = default;
    MyMercatorETRS89(MyMercatorETRS89 const&) = default;

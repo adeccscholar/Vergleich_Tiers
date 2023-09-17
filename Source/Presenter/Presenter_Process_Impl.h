@@ -30,6 +30,8 @@ public:
    virtual void ShowErrorForm(std::string const& caption, std::string const& message, std::string const& details) override;
    virtual void ShowInformationForm(std::string const& caption, std::string const& message, std::string const& details) override;
    virtual std::expected<bool, MyErrorInfo> ShowQuestionForm(std::string const& caption, std::string const& message, std::string const& details = ""s) override;
+
+   void SetForm(TMyForm&& para) { frm.swap(para);  } /// Attention, the old Mainform for this process get lost
 private:
    virtual TMyForm CreateLoginForm(TMyForm& parent) = 0;
 };

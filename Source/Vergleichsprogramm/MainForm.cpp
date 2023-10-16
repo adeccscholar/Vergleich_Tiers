@@ -52,9 +52,15 @@ TBusinessOperations const& MainForm::processes() const {
 // --------------------------------------------------------------
 void MainForm::Test() {
    using namespace test_space;
-   //Test4ProcessInstantiation(std::cerr, TMyForm(this, false));
-   Test4Distance(std::cerr);
-   Test4Angle(std::cerr);
-   Test4Point(std::cerr);
-
+   try {
+      //Test4ProcessInstantiation(std::cerr, TMyForm(this, false));
+      //Test4SafeVector(std::cerr);
+      Test4Numbers(std::cerr);
+      //Test4Distance(std::cerr);
+      //Test4Angle(std::cerr);
+      //Test4Point(std::cerr);
+      }
+   catch(std::exception const& ex) {
+      std::cerr << ex.what() << "\n";
+      }
    }

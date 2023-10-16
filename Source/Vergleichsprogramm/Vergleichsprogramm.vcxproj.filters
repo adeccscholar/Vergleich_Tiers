@@ -252,6 +252,18 @@
     <ClInclude Include="..\System\Test\Test4System.h">
       <Filter>System\Test</Filter>
     </ClInclude>
+    <ClInclude Include="..\System\MyNumber.h">
+      <Filter>System\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\System\MyCheck.h">
+      <Filter>System\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\System\MySafeNumber.h">
+      <Filter>System\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\System\MySafeVector.h">
+      <Filter>System\Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="UserDlg.h">

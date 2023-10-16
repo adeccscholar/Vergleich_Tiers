@@ -91,12 +91,12 @@ public:
 
 
 template <std::floating_point ty>
-class MyMercatorETRS89 : public MyPoint<ty, 2> {// std::pair<ty, ty> {
+class MyMercatorETRS89 : public MyPoint<ty, 2, MyDistanceKind::meter> {// std::pair<ty, ty> {
 public:
    constexpr MyMercatorETRS89(void) = default;
    MyMercatorETRS89(MyMercatorETRS89 const&) = default;
    MyMercatorETRS89(MyMercatorETRS89&&) noexcept = default;
-   MyMercatorETRS89(ty const& x, ty const& y) : MyPoint<ty>(x, y) { } //std::pair<ty, ty>(x, y) { }
+   MyMercatorETRS89(ty const& x, ty const& y) : MyPoint<ty, 2, MyDistanceKind::meter>(x, y) { } 
 
    virtual ~MyMercatorETRS89(void) = default;
 

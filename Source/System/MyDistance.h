@@ -1,12 +1,23 @@
 ﻿#pragma once
 
+#if __has_include("MyCheck.h")
+#include "MyCheck.h"
+#elif __has_include("System/MyCheck.h")
+#include "System/MyCheck.h"
+#endif
+
 
 #include <iostream>
 #include <cmath>
 #include <string>
 #include <numbers>
+#include <stdexcept>
 #include <type_traits>
+#include <optional>
 #include <format>
+#include <array>
+#include <string_view>
+
 
 using namespace std::string_literals;
 
@@ -16,7 +27,8 @@ template<typename ty>
 inline constexpr bool always_false_distance = false;
 
 template <typename ty>
-concept my_param_distance = std::is_floating_point_v<ty> || (std::is_integral_v<ty> && !std::is_same_v<ty, bool>);
+concept my_param_distance = std::is_floating_point_v< std::remove_cvref_t<ty>> ||
+                             (std::is_integral_v<std::remove_cvref_t<ty>> && !std::is_same_v<ty, bool>);
 
 template <MyDistanceKind kind, MyDistanceKind oth_knd>
 concept my_all_kind_without = (kind != MyDistanceKind::without && oth_knd != MyDistanceKind::without);
@@ -72,10 +84,11 @@ class MyDistance {
       }
    
 public:
-   MyDistance(void) = default;
+   using value_type = ty;
+   constexpr MyDistance(void) : theDistance(ty { }) { }
 
 
-   MyDistance(my_param_distance auto const& val)  requires (kind == MyDistanceKind::without) {
+   constexpr MyDistance(my_param_distance auto const& val)  requires (kind == MyDistanceKind::without) {
       if constexpr (std::is_same_v<ty, decltype(val)>) theDistance = val;
       else {
          if constexpr (std::is_integral_v<ty> && !std::is_integral_v<decltype(val)>) theDistance = std::round(val);
@@ -83,7 +96,7 @@ public:
       }
    }
 
-   explicit MyDistance(my_param_distance auto const& val) requires (kind != MyDistanceKind::without) {
+   explicit constexpr MyDistance(my_param_distance auto const& val) requires (kind != MyDistanceKind::without) {
       if constexpr (std::is_same_v<ty, decltype(val)>) theDistance = val;
       else {
          if constexpr (std::is_integral_v<ty> && !std::is_integral_v<decltype(val)>) theDistance = std::round(val);
@@ -95,7 +108,7 @@ public:
    //MyDistance(MyDistance const& other) : theDistance(other.Distance()) { }
 
    template <MyDistanceKind oth_knd, my_param_distance oth_ty>
-   MyDistance(MyDistance<oth_ty, oth_knd> const& other) {
+   constexpr MyDistance(MyDistance<oth_ty, oth_knd> const& other) {
       if constexpr (oth_knd == kind) {
          if constexpr (std::is_same_v<ty, oth_ty>) theDistance = other.theDistance();
          else theDistance = static_cast<ty>(other.theDistance());
@@ -104,10 +117,22 @@ public:
       }
 
    template <MyDistanceKind oth_knd, my_param_distance oth_ty, typename = std::enable_if_t<kind == oth_knd && std::is_same_v<ty, oth_ty>>>
-   MyDistance(MyDistance<oth_ty, oth_knd>&& other) noexcept {
+   constexpr MyDistance(MyDistance<oth_ty, oth_knd>&& other) noexcept {
       std::swap(theDistance, other.theDistance);
       }
 
+   template <my_param_distance oth_ty>
+   static std::conditional_t<std::is_same_v<ty, oth_ty> && !(std::is_integral_v<ty> && !std::is_integral_v<oth_ty>), ty&&, ty> Convert_and_Check(oth_ty&& val) {
+       if constexpr (std::numeric_limits<oth_ty>::has_infinity) 
+         if(std::isinf(val)) throw std::invalid_argument("value is infinity.");
+      if constexpr (std::numeric_limits<oth_ty>::has_quiet_NaN)
+         if(std::isnan(val)) throw std::invalid_argument("value is not a number.");
+      if constexpr (std::is_same_v<ty, oth_ty>) return std::move(val); 
+      else {
+         if constexpr (std::is_integral_v<ty> && !std::is_integral_v<oth_ty>) return std::forward<ty>(std::round(val));
+         else return std::move(static_cast<ty>(val));
+         }
+      }
 
    template <MyDistanceKind oth_knd, my_param_distance oth_ty>
    MyDistance& operator = (MyDistance<oth_ty, oth_knd> const& other) {
@@ -163,7 +188,7 @@ public:
    operator oth_ty const& () const { return this->theDistance;  }
 
    template <my_param_distance oth_ty, typename = std::enable_if_t<kind == MyDistanceKind::without && !std::is_same_v<oth_ty, ty> && std::is_constructible_v<oth_ty, ty>>>
-   operator oth_ty () const { return static_cast<oth_ty>(this->thisDistance); }
+   operator oth_ty () const { return static_cast<oth_ty>(this->theDistance); }
 
    operator std::string() const {
       if constexpr (kind == MyDistanceKind::without) return std::format("{}", theDistance);
@@ -171,6 +196,8 @@ public:
       }
 
    ///*
+   MyDistance operator - () const { return MyDistance(-theDistance);  }
+
    template <MyDistanceKind oth_knd, my_param_distance oth_ty>
       requires distance_kinds_convertible<oth_knd, kind>
    MyDistance& operator += (MyDistance<oth_ty, oth_knd> const& other) {
@@ -199,7 +226,7 @@ public:
    
    MyDistance& operator *= (my_param_distance auto const& val) {
       if constexpr (std::is_same_v<ty, decltype(val)>) theDistance *= val;
-      else theDistance *= static_cast<ty>(val);
+      else theDistance = Convert_and_Check(theDistance * val);
       return *this;
       }
 
@@ -231,9 +258,12 @@ public:
     template <my_param_distance oth_ty = ty, typename = std::enable_if_t<std::is_convertible_v<oth_ty, ty>>>
     void Distance(oth_ty const& val) {
       //using oth_ty = decltype(val);
+       /*
       if constexpr (std::is_same_v<ty, oth_ty>) theDistance = val;
       else if constexpr (std::is_integral_v<ty> && !std::is_integral_v<oth_ty>) theDistance = std::round(val);
       else theDistance = static_cast<ty>(val);
+      */
+       theDistance = Convert_and_Check(val);
       }
 
    void Distance(std::string_view val) { auto result = std::from_chars(val.data(), val.data() + val.size(), theDistance); }
@@ -286,7 +316,7 @@ public:
             else if constexpr (oth_knd == MyDistanceKind::centimeter) theDistance = set_value<ty>(other.Distance() /   100);
             else if constexpr (oth_knd == MyDistanceKind::kilometer)  theDistance = set_value<ty>(other.Distance() * 1'000);
             // -------------------------------------------------------------------------------------------------------
-            else if constexpr (oth_knd == MyDistanceKind::miles)      theDistance = set_value<ty>(other.Distance() * 1'609.34);
+            else if constexpr (oth_knd == MyDistanceKind::miles)      theDistance = set_value<ty>(other.Distance() * 1'609.344);
             else if constexpr (oth_knd == MyDistanceKind::yards)      theDistance = set_value<ty>(other.Distance() * 0.91439997073920623088319997081);
             else if constexpr (oth_knd == MyDistanceKind::foot)       theDistance = set_value<ty>(other.Distance() * 0.3048);
             else if constexpr (oth_knd == MyDistanceKind::inchs)      theDistance = set_value<ty>(other.Distance() * 0.0254);
@@ -395,7 +425,7 @@ public:
             else if constexpr (oth_knd == MyDistanceKind::centimeter) return MyDistance<oth_ty, oth_knd>(theDistance *   100);
             else if constexpr (oth_knd == MyDistanceKind::kilometer)  return MyDistance<oth_ty, oth_knd>(theDistance / 1'000);
             // ----------------------------------------------------------------------------------------------------------------
-            else if constexpr (oth_knd == MyDistanceKind::miles)      return MyDistance<oth_ty, oth_knd>(theDistance / 1609.34);
+            else if constexpr (oth_knd == MyDistanceKind::miles)      return MyDistance<oth_ty, oth_knd>(theDistance / 1609.344);
             else if constexpr (oth_knd == MyDistanceKind::yards)      return MyDistance<oth_ty, oth_knd>(theDistance * 1.09361329833770779452749558124);
             else if constexpr (oth_knd == MyDistanceKind::foot)       return MyDistance<oth_ty, oth_knd>(theDistance / 0.3048);
             else if constexpr (oth_knd == MyDistanceKind::inchs)      return MyDistance<oth_ty, oth_knd>(theDistance / 0.0254);
@@ -415,7 +445,7 @@ public:
          else if constexpr (kind == MyDistanceKind::miles) {
             if constexpr      (oth_knd == MyDistanceKind::millimeter) return MyDistance<oth_ty, oth_knd>(theDistance * 1'609'344);
             else if constexpr (oth_knd == MyDistanceKind::centimeter) return MyDistance<oth_ty, oth_knd>(theDistance *   160'934.4);
-            else if constexpr (oth_knd == MyDistanceKind::meter)      return MyDistance<oth_ty, oth_knd>(theDistance *     1'609.34);
+            else if constexpr (oth_knd == MyDistanceKind::meter)      return MyDistance<oth_ty, oth_knd>(theDistance *     1'609.344);
             else if constexpr (oth_knd == MyDistanceKind::kilometer)  return MyDistance<oth_ty, oth_knd>(theDistance *         1.60934);
             // -------------------------------------------------------------------------------------------------------------------
             else if constexpr (oth_knd == MyDistanceKind::yards)      return MyDistance<oth_ty, oth_knd>(theDistance *           1'760);
@@ -476,6 +506,40 @@ public:
          }
 
       ty theDistance;
+   };
+
+
+   /*
+   //template <my_param_distance ty = double, MyDistanceKind kind = MyDistanceKind::without>
+   class MyDistance
+   */
+
+
+
+template <my_param_distance ty, MyDistanceKind kind>
+struct std::formatter<MyDistance<ty, kind>> : std::formatter<std::string_view> {
+   std::string format_string;
+   
+   constexpr auto parse(std::format_parse_context& ctx) {
+      auto pos = ctx.begin();
+      format_string = "{:";
+      while (pos != ctx.end() && *pos != '}') {
+         format_string += *pos;
+         ++pos;
+      }
+      if constexpr (kind == MyDistanceKind::without) format_string += "}";
+      else format_string += "} {:<2}";
+      return pos; 
+      }
+      
+   auto format(MyDistance<ty, kind> const& val, std::format_context& ctx) {
+      std::string temp;  
+      if constexpr (kind == MyDistanceKind::without)
+         std::vformat_to(std::back_inserter(temp), format_string, std::make_format_args(val.Distance()));
+      else
+         std::vformat_to(std::back_inserter(temp), format_string, std::make_format_args(val.Distance(), val.unit()));
+      return std::formatter<std::string_view>::format(temp, ctx);
+      }
    };
 
 // ----------------------------------------------------------------------------------

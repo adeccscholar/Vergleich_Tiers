@@ -11,8 +11,8 @@ Selektoren sind fertig
    #include "MyAngle.h"
    #include "MyDistance.h"
 #elif __has_include("System/MyPoint.h")
-   #include "MyAngle.h"
-   #include "MyDistance.h"
+   #include "System/MyAngle.h"
+   #include "System/MyDistance.h"
 #endif
 
 #include <iostream>
@@ -31,12 +31,14 @@ Selektoren sind fertig
 #include <ranges>
 
 
+
 template <my_param_distance ty, int SIZE, MyDistanceKind kind = MyDistanceKind::without, typename = std::enable_if_t<SIZE == 2 || SIZE == 3>>
 class MyPoint : public std::array<MyDistance<ty, kind>, SIZE> {
    
    friend std::ostream& operator << (std::ostream& out, MyPoint<ty, SIZE, kind> const& point) {
-      out << "(";
-      for (size_t i = 0; i < SIZE; ++i) out << (i > 0 ? ", " : "") << point[i];
+      out << "(" << *point.cbegin();
+      std::for_each(point.cbegin() + 1, point.cend(), [&out](auto const& val) { out << ", " << val; });
+      //for (size_t i = 0; i < SIZE; ++i) out << (i > 0 ? ", " : "") << point[i];
       return out << ")";
       }
 
@@ -78,17 +80,19 @@ class MyPoint : public std::array<MyDistance<ty, kind>, SIZE> {
       }
 
 public:
+   using value_type = ty;
+
    constexpr MyPoint(void) = default;
 
    // Kopierkonstruktor für MyPoint mit gleichen Ty
-   MyPoint(const MyPoint<ty, SIZE, kind>& other) : std::array<MyDistance<ty, kind>, SIZE>(other) {}
+   MyPoint(MyPoint<ty, SIZE, kind> const& other) : std::array<MyDistance<ty, kind>, SIZE>(other) {}
 
    // Kopierkonstruktor für abweichenden Ty
    //template <typename oth_ty, typename = std::enable_if_t<std::is_convertible_v<oth_ty, ty>>>
 
    template <MyDistanceKind oth_knd = kind, my_param_distance oth_ty = ty, 
       typename = std::enable_if_t<std::is_convertible_v<oth_ty, ty> && distance_kinds_convertible<kind, oth_knd>>>
-   MyPoint(const MyPoint<oth_ty, SIZE, oth_knd>& other) {
+   MyPoint(MyPoint<oth_ty, SIZE, oth_knd> const& other) {
       std::transform(other.begin(), other.end(), this->begin(), [](auto const& val) { return val.convert_to<kind, ty>(); });
       }
 
@@ -107,11 +111,18 @@ public:
    //--------------------------------------------------------
    template <MyDistanceKind oth_knd = kind, my_param_distance oth_ty = ty>
    MyPoint(std::vector<MyDistance<oth_ty, oth_knd>> const& vec) {
-      if (vec.size() != SIZE) { throw std::invalid_argument("Vector size does not match MyPoint size"); }
+      if (vec.size() != SIZE) { throw std::invalid_argument("Vector size does not match MyPoint size."); }
       if constexpr (oth_knd == kind && std::is_same_v<oth_ty, ty>) std::copy(vec.begin(), vec.end(), this->begin());
       else std::transform(vec.begin(), vec.end(), this->begin(), [](auto const & val) { return val.convert_to<kind, ty>(); });
       }
 
+
+   template <MyDistanceKind oth_knd = kind, my_param_distance oth_ty = ty>
+   MyPoint(std::span<MyDistance<oth_ty, oth_knd>> span) {
+      if (span.size() != SIZE) { throw std::invalid_argument("size of std::span don't match wih MyPoint size."); }
+      if constexpr (oth_knd == kind && std::is_same_v<oth_ty, ty>) std::copy(span.begin(), span.end(), this->begin());
+      else std::transform(span.begin(), span.end(), this->begin(), [](auto const& val) { return val.convert_to<kind, ty>(); });
+      }
 
    //------------------------------------------------------------------
    /*
@@ -121,6 +132,7 @@ public:
       if (!ss) throw std::invalid_argument("invalid input");
       }
    */
+
 
    // ------------------------------------------------------------------
    // Selektoren der Klasse
@@ -209,7 +221,8 @@ public:
       auto products = std::views::zip(*this, other) | std::views::transform([](auto const& pair) {
          if constexpr (std::is_same_v<oth_ty, ty>) return std::get<0>(pair).Distance<kind>() * std::get<1>(pair).Distance<kind>();
          }) | std::ranges::to<std::vector>();
-      return MyDistance<ty, kind>(std::accumulate(products.begin(), products.end(), static_cast<ty>(0.0)));
+      auto ret = std::accumulate(products.begin(), products.end(), static_cast<ty>(0.0));
+      return MyDistance<ty, kind>(ret);
       }
 
 
@@ -225,6 +238,65 @@ public:
          return MyAngle<double, MyAngleKind::radian>(ret);
          }
       }
+
+   template <MyDistanceKind oth_knd = kind, my_param_distance oth_ty = ty, typename = std::enable_if_t<SIZE == 3>>
+     requires std::is_convertible_v<oth_ty, ty> && distance_kinds_convertible<kind, oth_knd>
+   MyPoint<ty, SIZE, kind> CrossProduct(MyPoint<oth_ty, SIZE, oth_knd> const& other) const {
+      return { (*this)[1] * other[2].Distance<kind>() - (*this)[2] * other[1].Distance<kind>(),
+               (*this)[2] * other[0].Distance<kind>() - (*this)[0] * other[2].Distance<kind>(),
+               (*this)[0] * other[1].Distance<kind>() - (*this)[1] * other[0].Distance<kind>() };
+      }
+/*
+* 
+* 
+
+    std::pair<double, std::array<double, SIZE - 1>> getAzimuthInclinationAndDistance() const {
+        std::array<double, SIZE - 1> angles;
+        double distance = 0.0;
+
+        if constexpr (SIZE == 2) {
+            // 2D-Berechnung für Azimut
+            angles[0] = std::atan2((*this)[1], (*this)[0]);
+            distance = std::sqrt((*this)[0] * (*this)[0] + (*this)[1] * (*this)[1]);
+        }
+
+        if constexpr (SIZE == 3) {
+            // 3D-Berechnung für Azimut
+            angles[0] = std::atan2((*this)[1], (*this)[0]);
+
+            // 3D-Berechnung für Neigung
+            double xyLength = std::sqrt((*this)[0] * (*this)[0] + (*this)[1] * (*this)[1]);
+            angles[1] = std::atan2((*this)[2], xyLength);
+
+            // Berechnung der Distanz
+            distance = std::sqrt((*this)[0] * (*this)[0] + (*this)[1] * (*this)[1] + (*this)[2] * (*this)[2]);
+        }
+
+        return std::make_pair(distance, angles);
+    }
+
+    static MyPoint fromAzimuthInclinationAndDistance(double azimuth, double inclination, double distance) {
+        MyPoint result;
+
+        if constexpr (SIZE == 2) {
+            // 2D-Berechnung für Punkt
+            result[0] = distance * std::cos(azimuth);
+            result[1] = distance * std::sin(azimuth);
+        }
+
+        if constexpr (SIZE == 3) {
+            // 3D-Berechnung für Punkt
+            result[0] = distance * std::cos(azimuth) * std::cos(inclination);
+            result[1] = distance * std::sin(azimuth) * std::cos(inclination);
+            result[2] = distance * std::sin(inclination);
+        }
+
+        return result;
+    }
+
+*/
+
+
 
    // --------------- !!! BAUSTELLE -----------------------
 
@@ -254,6 +326,13 @@ public:
       }
    
    // ------------------------------------------------------------------------------------------------------------
+   MyPoint<ty, SIZE, kind> operator -() const {
+      MyPoint<ty, SIZE, kind> ret;
+      std::transform(this->begin(), this->end(), ret.begin(), [](auto const& val) { return -val; });
+      //for (size_t idx = 0; auto const& val : *this) ret[idx++] = -val;
+      return ret;
+      } 
+
    template <MyDistanceKind oth_knd = kind, my_param_distance oth_ty = ty, 
          typename = std::enable_if_t<std::is_convertible_v<oth_ty, ty> && distance_kinds_convertible<kind, oth_knd>>>
    MyPoint<ty, SIZE, kind>& operator += (const MyPoint<oth_ty, SIZE, oth_knd>& other) {
@@ -290,6 +369,18 @@ public:
 
 
    // Helper for axis
+   /*
+   constexpr MyPoint<ty, SIZE, kind> Null_Point() const {
+      return MyPoint<ty, SIZE, kind> axis;
+      }
+   */
+   
+
+   constexpr MyPoint<ty, SIZE, kind> Null_Point() const {
+      MyPoint<ty, SIZE, kind> axis;
+      return axis;
+      }
+
    constexpr MyPoint<ty, SIZE, kind> X_Axis() const {
       MyPoint<ty, SIZE, kind> axis;
       axis.X(MyDistance<ty, kind>(1));
@@ -309,7 +400,60 @@ public:
       return axis;
       }
 
+
+private:
+   static const inline MyDistance<ty, kind> _V1 = MyDistance<ty, kind> { 1 };
+   static const inline MyDistance<ty, kind> _V0 = MyDistance<ty, kind>{ 1 };
+   static const inline  std::array<MyDistance<ty, kind>, 9> NormValues = { _V1, _V0, _V0, _V0, _V1, _V0, _V0, _V0, _V1 };
+
+   //static const inline MyPoint<ty, SIZE, kind> v1 = 
+
+   template <int POS, my_param_distance oth_ty = ty, int ASIZE = SIZE, MyDistanceKind oth_knd = kind>
+   static constexpr MyPoint Initialize() {
+      MyPoint<oth_ty, ASIZE, oth_knd> ret;
+      if constexpr (ASIZE == 2) {
+         if constexpr (POS == 0)      ret = { 1, 0 };
+         else if constexpr (POS == 1) ret = { 0, 1 };
+         }
+      else if constexpr (ASIZE == 3) {
+         if constexpr (POS == 0)      ret = { 1, 0, 0 };
+         else if constexpr (POS == 1) ret = { 0, 1, 0 };
+         else if constexpr (POS == 2) ret = { 0, 0, 1 };
+         }
+      return ret;
+      }
+   /*
+   static inline MyPoint data1 = Initialize<0>();
+   static inline MyPoint data2 = Initialize<1>();
+   */
    };
+
+ template <my_param_distance ty, int SIZE, MyDistanceKind kind>
+ struct std::formatter<MyPoint<ty, SIZE, kind>> : std::formatter<std::string_view> {
+      std::string format_string;
+            constexpr auto parse(std::format_parse_context& ctx) {
+         auto pos = ctx.begin();
+         format_string = "{:";
+         while (pos != ctx.end() && *pos != '}') {
+            format_string += *pos;
+            ++pos;
+         }
+         format_string += "}";
+         return pos; // returns the iterator to the last parsed character in the format string, in this case we just swallow everything
+        }
+
+      auto format(MyPoint<ty, SIZE, kind> const& val, std::format_context& ctx) {
+         std::string temp;
+         
+         std::string fmt = "(" + format_string;
+         std::vformat_to(std::back_inserter(temp), fmt, std::make_format_args(val[0]));
+         fmt = ", " + format_string;
+         for (size_t idx = 1; idx < SIZE; ++idx) std::vformat_to(std::back_inserter(temp), fmt, std::make_format_args(val[idx]));
+         temp += ")";
+         return std::formatter<std::string_view>::format(temp, ctx);
+      }
+   };
+
 
 
 template <std::floating_point ty>

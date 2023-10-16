@@ -1,11 +1,207 @@
 ﻿#include "Test4System.h"
+#include <System/MyNumber.h>
 #include <System/MyDistance.h>
 #include <System/MyGeoLocation.h>
 
+#include <System/MySafeVector.h>
+#include <System/MySafeNumber.h>
+
+#include <cmath>
 #include <iomanip>
 #include <sstream>
 
+#include <chrono>
+#include <random>
+#include <functional>
+#include <algorithm>
+
+#include <limits>
+#include <cfenv>
+
 namespace test_space {
+
+ // --------------------------------------------------------------
+ // method to call and test instances of the class MySafeVector
+ // --------------------------------------------------------------
+void FillVector(MySafeVector<int>& result, size_t count) {
+      std::mt19937 rand_value;
+      std::uniform_int_distribution<int> distri_function(1, 100);
+      rand_value.seed(std::chrono::system_clock::now().time_since_epoch().count());
+      std::function<int()> rand_func = bind(distri_function, rand_value);
+
+      result.resize(count);
+      std::generate(result.begin(), result.end(), [rand_func]() { return rand_func(); });
+   }
+
+ void Test4SafeVector(std::ostream& out) {
+    using namespace std::string_literals;
+    
+    using vecStrings = MySafeVector<std::string>;
+    using tplType = std::tuple<vecStrings, vecStrings, bool>;
+
+    tplType tplist = tplType { vecStrings { "key1"s, "key2"s }, vecStrings { "field1"s, "field2"s, "field3"s }, true };
+
+    for(auto const& tmp : std::get<0>(tplist)) {
+       out << tmp << "\n";
+       }
+ 
+    MySafeVector<int> values;
+    FillVector(values, 20);
+    std::sort(values.begin(), values.end());
+    for (auto& val : values) out << val << "\n";
+    }
+
+ // --------------------------------------------------------------
+ // method to call and test instances of the class MyNumber
+ // --------------------------------------------------------------
+ double zero_val = 0.0;
+
+ void TestFPEnv(int exceptions, std::ostream& out) {
+    if (exceptions & FE_INEXACT)   out << "FE_INEXACT was triggered: Inexact result detected." << std::endl;
+    if (exceptions & FE_UNDERFLOW) out << "FE_UNDERFLOW was triggered: Underflow detected." << std::endl;
+    if (exceptions & FE_OVERFLOW)  out << "FE_OVERFLOW was triggered: Overflow detected." << std::endl;
+    if (exceptions & FE_DIVBYZERO) out << "FE_DIVBYZERO was triggered: Division by zero detected." << std::endl;
+    if (exceptions & FE_INVALID)   out << "FE_INVALID was triggered: Invalid operation detected." << std::endl;
+    }
+
+ void Test4Numbers(std::ostream& out) {
+    out << "Size of bool: " << sizeof(bool) << " bytes" << std::endl;
+    out << "Size of optional<int>: " << sizeof(std::optional<int>) << " bytes" << std::endl;
+    out << "Test MySafeNumber\n";
+    //MySafeNumber<int, ENumberSafety::withAdditionalData> sn(25);
+    //sn.Status(ENumberStatus::initialized);
+    //MySafeNumber<int> sn(25);
+    //if (!sn) out << "empty\n";
+    MySafeNumber sn { 25 };
+    out << "Size of SafeNumber: " << sizeof(sn) << " bytes" << std::endl;
+    MySafeNumber nsn{ -sn };
+    MySafeNumber<int, combineNumberSafety(ENumberSafety::withException, ENumberSafety::withTrace, ENumberSafety::withOptionalChecks)> sn_o { 1 };
+    try {
+       out << (sn +  5) << "\n";
+       out << (sn * 50) << "\n";
+       out << (sn /  5) << "\n";
+       out << sn.pow(2) << "\n";
+       out << nsn << "\n";
+       out << nsn.abs() << "\n";
+       out << ++sn_o << "\n";
+       sn_o.reset();
+       out << ++sn_o << "\n";
+
+       }
+    catch(std::exception& ex) {
+       out << ex.what() << "\n";
+       }
+
+    out << "\nadditional test for preparation\n";
+    int testabs = std::abs(std::numeric_limits<int>::min());
+    out << testabs << " : " << std::numeric_limits<int>::min() << " ... " << std::numeric_limits<int>::max() << std::endl;
+    
+    long long constexpr value0 = std::numeric_limits<long long>::max();
+    double constexpr value1 = static_cast<double>(std::numeric_limits<long long>::max());
+    double constexpr value2 = static_cast<double>(std::numeric_limits<double>::max());
+
+    std::feclearexcept(FE_ALL_EXCEPT);
+    long long value3 = static_cast<long long>(std::numeric_limits<double>::max());
+    TestFPEnv(std::fetestexcept(FE_ALL_EXCEPT), out);
+
+    out << "\n\nMaximal long long: " << value0 << std::endl
+        << "Maximal double as long long: " << value3 << std::endl
+        << "Maximal long long as double: " << value1 << std::endl
+        << "Maximal double: " << value2 << std::endl;
+
+    MyNumbers test1, test2(3.0);
+    out << "Method to test the MyNumber class\n";
+    out << "test1 = " << test1 << "\n";
+    out << "test2 = " << test2 << "\n";
+    out << "test1 + 5 = " << test1 + 5 << "\n";
+    test1 += 5;
+    out << "Test1 + test2 = " << test1 + test2 << "\n";
+
+    // "Overflow" für Gleitkommazahlen
+    out  << std::boolalpha << std::scientific;
+    test1 = DBL_MAX;
+    test2 = DBL_MIN;
+    out << "test1 = " << test1 << " / " << std::isinf(test1) << "\n";
+    out << "test2 = " << test2 << " / " << std::isinf(test1) << "\n";
+    out << "epsilon = " << std::numeric_limits<double>::epsilon() << " / " << std::isnan(std::numeric_limits<double>::epsilon()) << "\n";
+    test1 *= 2.0;
+    test2 /= 2.0;
+    out << "test1 = " << test1 << " / " << std::isinf(test1) << "\n";
+    out << "test2 = " << test2 << " / " << std::isinf(test1) << "\n";
+
+    out << "epsilon = " << std::numeric_limits<double>::epsilon() << "\n";
+    out << "min     = " << std::numeric_limits<double>::min() << "\n";
+    out << "max     = " << std::numeric_limits<double>::max() << "\n";
+      
+    out << "\n\nInf ? " << (float)std::numeric_limits<double>::max() << "\n";
+    double from1 = 0, to1 = std::nextafter(from1, 1.);
+    out << "The next representable double after " << std::setprecision(20) << from1
+       << " is " << to1
+       << std::hexfloat << " (" << to1 << ")\n" << std::defaultfloat;
+
+    std::feclearexcept(FE_ALL_EXCEPT);
+    out << "1.0/0.0 = " << 1.0 / zero_val << '\n';
+    if (std::fetestexcept(FE_DIVBYZERO))
+       out << "division by zero reported\n";
+    else
+       out << "division by zero not reported\n";
+
+    std::feclearexcept(FE_ALL_EXCEPT);
+    out << "1.0/10 = " << 1. / 10 << '\n';
+    if (std::fetestexcept(FE_INEXACT))
+       out << "inexact result reported\n";
+    else
+       out << "inexact result not reported\n";
+
+
+    double result = std::numeric_limits<double>::max(); // Maximaler Wert für double
+    result = result * 2.0; // Versuch eines Überlaufs
+
+    // Prüfen, ob FE_OVERFLOW ausgelöst wurde
+    if (std::fetestexcept(FE_OVERFLOW)) {
+       out << "FE_OVERFLOW wurde ausgelöst: Überlauf erkannt." << std::endl;
+    }
+    else {
+       out << "FE_OVERFLOW wurde nicht ausgelöst: Kein Überlauf erkannt." << std::endl;
+    }
+
+    double constexpr base = std::numeric_limits<double>::max(); // Maximaler Wert für double
+    double constexpr exponent = 2.0; // Große Potenz
+
+    result = std::pow(base, exponent); // Potenzberechnung
+
+    // Prüfen, ob FE_OVERFLOW ausgelöst wurde
+    if (std::fetestexcept(FE_OVERFLOW)) {
+       out << "Pow FE_OVERFLOW wurde ausgelöst: Überlauf erkannt." << std::endl;
+    }
+    else {
+       out << "Pow FE_OVERFLOW wurde nicht ausgelöst: Kein Überlauf erkannt." << std::endl;
+    }
+
+
+    std::feclearexcept(FE_ALL_EXCEPT);
+
+    result = std::numeric_limits<double>::min(); // Kleiner als der kleinste darstellbare Wert für double
+    result = result / 20000000000000000.0; // Versuch eines Unterlaufs
+
+    // Prüfen, ob FE_UNDERFLOW ausgelöst wurde
+    if (std::fetestexcept(FE_UNDERFLOW)) {
+       out << "FE_UNDERFLOW wurde ausgelöst: Unterlauf erkannt." << std::endl;
+    }
+    else {
+       out << "FE_UNDERFLOW wurde nicht ausgelöst: Kein Unterlauf erkannt." << std::endl;
+    }
+    /*
+    std::feclearexcept(FE_ALL_EXCEPT);
+    out << "pow = " <<  << '\n';
+    if (std::fetestexcept(FE_INEXACT))
+       out << "inexact result reported\n";
+    else
+       out << "inexact result not reported\n";
+
+     */
+
+    }
 
 // --------------------------------------------------------------
 // method to call and test instances of the class MyDistance
@@ -16,6 +212,8 @@ void Test4Distance(std::ostream& out) {
    auto entfernung = 1000.0_meter;
    MyDistance<double, MyDistanceKind::kilometer> entfernung2{ entfernung };
    bool cc = (entfernung == entfernung2);
+   //out << std::format(out.getloc(), "{:10.2Lf}\n", entfernung);
+   out << std::format(out.getloc(), "{:10.1Lf}\n", entfernung);
    out << std::setprecision(2) << entfernung << "\n";
    out << entfernung << " " << (entfernung == entfernung2 ? "=" : "<>") << " " << entfernung2 << "\n";
    entfernung = entfernung + 500._meter;
@@ -30,6 +228,15 @@ void Test4Distance(std::ostream& out) {
 
    out << entfernung * 2 << " = " << entfernung + test_yards << " = "
       << std::boolalpha << (entfernung * 2 == entfernung + test_yards) << "\n";
+
+   try {
+      double tt = 12;
+      entfernung.Distance(tt);
+      out << entfernung << "\n";
+   } 
+   catch(std::exception const& ex) {
+      out << "\n\nError detected: " << ex.what() << "\n";
+      }
 
    out << "\nTest passed.\n\n";
 }
@@ -65,7 +272,7 @@ void Test4Angle(std::ostream& out) {
    test *= 2;
    test += 10.0_deg;
    auto cmp = test.convert_to<MyAngleKind::degree>();
-   out << test.convert_to<MyAngleKind::degree>() << "\n";
+   out << std::format("{:9.6f} {} {:7.3f}\n", test, test == cmp ? " == " : " != ", cmp);
 
    bool check = (test == cmp);
    auto calc = test + cmp;
@@ -73,8 +280,10 @@ void Test4Angle(std::ostream& out) {
    MyAngle<double, MyAngleKind::degree> tmp{ 0 };
    std::string w = "13";
    tmp.Angle(w);
-   out << "Winkel als deg: " << tmp.Angle() << "\n";
-   out << "Winkel als rad: " << tmp.Angle<MyAngleKind::radian>() << "\n";
+   out << std::format("Winkel in deg: {:10.2f}\n", tmp.Angle());
+   out << std::format("Winkel in rad: {:10.6f}\n", tmp.Angle<MyAngleKind::radian>());
+   out << std::format("Winkel in deg: {:10.2f}\n", tmp);
+   out << std::format("Winkel in rad: {:10.6f}\n", tmp.convert_to<MyAngleKind::radian>());
 
    auto test2 = 120.0_deg;
    out << std::setprecision(4);
@@ -90,77 +299,124 @@ void Test4Angle(std::ostream& out) {
 //  test for MyPoint
 // --------------------------------------------------------------
 
+template <typename stream_ty, class... Args>
+void myPrint(stream_ty& out, std::vector<std::string> const& fmts, Args&&... args) {
+   auto fmt = std::accumulate(fmts.begin(), fmts.end(), std::string());
+   std::vprint_nonunicode(out, fmt, std::make_format_args(args...));
+   };
+
+template <typename stream_ty, class... Args>
+void myPrintLn(stream_ty& out, std::vector<std::string> const& fmts, Args&&... args) {
+   auto fmt = std::accumulate(fmts.begin(), fmts.end(), std::string());
+   fmt += "\n";
+   std::vprint_nonunicode(out, fmt, std::make_format_args(args...));
+   };
+
 template <MyDistanceKind oth_knd, MyDistanceKind knd1, my_param_distance ty1, int SIZE1, MyDistanceKind knd2, my_param_distance ty2, int SIZE2>
    requires (SIZE1 == SIZE2)
 void TestSequenze(std::ostream& out, std::string const& strText, MyPoint<ty1, SIZE1, knd1> const& p1, MyPoint<ty2, SIZE2, knd2> const& p2) {
-   auto PointWithOther = [](auto const& p, bool boFirst) -> std::string {
-      std::ostringstream os;
-      if constexpr (knd1 != MyDistanceKind::without && knd2 != MyDistanceKind::without) {
-         if constexpr (knd1 != knd2) { 
-            if(boFirst) os << " = " << p.convert_to<knd2>();
-            else        os << " = " << p.convert_to<knd1>();
-            }
-         else os << "";
-         }
-      return os.str();
+ 
+   auto constexpr FmtStr1 = []() -> std::string {
+      if constexpr (std::is_floating_point_v<ty1>) return "{:10.6Lf}"s;
+      else                                         return "{:8Ld}"s;
       };
+
+   auto constexpr FmtStr2 = []() -> std::string {
+      if constexpr (std::is_floating_point_v<ty2>) return "{:10.6Lf}"s;
+      else                                         return "{:8Ld}"s;
+      };
+
+
+   auto PointWithOther = [&out, FmtStr1, FmtStr2](auto const& p, bool boFirst) {
+      if constexpr (knd1 != MyDistanceKind::without && knd2 != MyDistanceKind::without) {
+         if constexpr (knd1 != knd2) {
+            if (boFirst) myPrint(out, { " = ", FmtStr2(), "\n" }, p.convert_to<knd2>());
+            else         myPrint(out, { " = ", FmtStr1(), "\n" }, p.convert_to<knd1>());
+            }
+         else out << "\n";
+         }
+      else out << "\n";
+      };
+
+   
+
 
    out << strText << "\n"
        << "-------------------------------------------------------\n";
-   out << "Pt1 =                    " << p1 << PointWithOther(p1, true) << "\n"
-      << "Pt2 =                    " << p2 << PointWithOther(p2, false) << "\n"
-      << "Pt1 + Pt2 =              " << p1 + p2 << "\n"
-      << "Pt1 - Pt2 =              " << p1 - p2 << "\n"
-      << "Pt1 * 5.0 =              " << p1 * 5.0 << "\n"
-      << "5.0 * Pt1 =              " << 5.0 * p1 << "\n"
-      << "Pt1 * 5   =              " << p1 * 5 << "\n";
+   std::string fmt1, fmt2;
+   if constexpr (std::is_floating_point_v<typename std::remove_const_t<std::remove_reference_t<decltype(p1)>>::value_type>) fmt1 = "{:.6Lf}"s;
+   else fmt1 = "{:8Ld}"s;
+   std::string fmtTxt { "{:<25s}"s };
+   myPrintLn(out, { FmtStr1() }, p1);
+   myPrint(out,   { fmtTxt, FmtStr1() }, "Pt1 =", p1);                                    PointWithOther(p1, true);
+   myPrint(out,   { fmtTxt, FmtStr2() }, "Pt2 =", p2);                                    PointWithOther(p2, false);
+   myPrint(out,   { fmtTxt, FmtStr1() }, "Pt1 + Pt2 =", p1 + p2);                         PointWithOther(p1 + p2, true);
+   myPrint(out,   { fmtTxt, FmtStr1() }, "Pt1 - Pt2 =", p1 - p2);                         PointWithOther(p1 - p2, true);
+   myPrint(out,   { fmtTxt, FmtStr1() }, "Pt1 * 5.0 =", p1 * 5.0);                        PointWithOther(p1 * 5.0, true);
+   myPrint(out,   { fmtTxt, FmtStr1() }, "5.0 * Pt1 =", 5.0 * p1);                        PointWithOther(5.0 * p1, true);
+   myPrint(out,   { fmtTxt, FmtStr1() }, "Pt1 * 5   =", p1 * 5);                          PointWithOther(p1 * 5, true);
+   myPrint(out,   { fmtTxt, FmtStr1() }, "ScalarProd(Pt1, Pt2) =", p1.ScalarProduct(p2)); PointWithOther(p1.ScalarProduct(p2), true);
+   myPrint(out,   { fmtTxt, FmtStr1() }, "Distance Pt1 - Pt2 =",   p1.Distance(p2));      PointWithOther(p1.Distance(p2), true);
+   myPrint(out,   { fmtTxt, FmtStr1() }, "Distance Pt2 - Pt1=",    p2.Distance(p1));      PointWithOther(p2.Distance(p1), false);
+   myPrint(out,   { fmtTxt, FmtStr1() }, "Magnitude Pt1 =",        p1.Magnitude());       PointWithOther(p1.Magnitude(), true);
+   myPrint(out,   { fmtTxt, FmtStr1() }, "Magnitude Pt2 =",        p2.Magnitude());       PointWithOther(p2.Magnitude(), false);
    //*
-   out << "Angle(Pt1, Pt2) deg =    " << p1.Angle(p2) << "\n"
-       << "Angle(Pt1, Pt2) rad =    " << p1.Angle<MyAngleKind::radian>(p2) << "\n"
-       << "Angle(Pt2, Pt1) =        " << p2.Angle(p1) << "\n"
-       << "Angle(Pt1, x-Axis) deg = " << p1.Angle(p1.X_Axis()) << "  " << p1.X_Axis() << "\n"
-       << "Angle(Pt1, y-Axis) deg = " << p1.Angle(p1.Y_Axis()) << "  " << p1.Y_Axis() << "\n";
+   myPrintLn(out, { fmtTxt, "{:8.2Lf}" }, "Angle(Pt1, Pt2) deg =", p1.Angle(p2));
+   myPrintLn(out, { fmtTxt, "{:8.6Lf}" }, "Angle(Pt1, Pt2) rad =", p1.Angle<MyAngleKind::radian>(p2));
+   myPrintLn(out, { fmtTxt, "{:8.2Lf}" }, "Angle(Pt2, Pt1) =",     p2.Angle(p1));
+   myPrintLn(out, { fmtTxt, "{:8.2Lf}", "  X-Axis = ", FmtStr1() }, "Angle(Pt1, x-Axis) deg =", p1.Angle(p1.X_Axis()), p1.X_Axis());
+   myPrintLn(out, { fmtTxt, "{:8.2Lf}", "  Y-Axis = ", FmtStr1() }, "Angle(Pt1, y-Axis) deg =", p1.Angle(p1.Y_Axis()), p1.Y_Axis());
    if constexpr (SIZE1 == 3) {
-      out << "Angle(Pt1, z-Axis) deg = " << p1.Angle(p1.Z_Axis()) << "  " << p1.Z_Axis() << "\n";
+      myPrintLn(out, { fmtTxt, "{:8.2Lf}", "  Z-Axis = ", FmtStr1() }, "Angle(Pt1, z-Axis) deg =", p1.Angle(p1.Z_Axis()), p1.Z_Axis());
       }
+   myPrintLn(out, { fmtTxt, "{:8.2Lf}", "  X-Axis = ", FmtStr2() }, "Angle(Pt2, x-Axis) deg =", p2.Angle(p2.X_Axis()), p2.X_Axis());
+   myPrintLn(out, { fmtTxt, "{:8.2Lf}", "  Y-Axis = ", FmtStr2() }, "Angle(Pt2, y-Axis) deg =", p2.Angle(p2.Y_Axis()), p2.Y_Axis());
 
-   out << "Angle(Pt2, x-Axis) deg = " << p2.Angle(p2.X_Axis()) << "  " << p2.X_Axis() << "\n"
-       << "Angle(Pt2, y-Axis) deg = " << p2.Angle(p2.Y_Axis()) << "  " << p2.Y_Axis() << "\n";
    if constexpr (SIZE1 == 3) {
-      out << "Angle(Pt2, z-Axis) deg = " << p2.Angle(p2.Z_Axis()) << "  " << p2.Z_Axis() << "\n";
+      myPrintLn(out, { fmtTxt, "{:8.2Lf}", "  Z-Axis = ", FmtStr2() }, "Angle(Pt2, z-Axis) deg =", p2.Angle(p2.Z_Axis()), p2.Z_Axis());
       }
    //*/
-   out << "ScalarProd(Pt1, Pt2) =   " << p1.ScalarProduct(p2) << "\n"
-       << "Distance Pt1 - Pt2   =   " << p1.Distance(p2) << PointWithOther(p1.Distance(p2), true)  << "\n"
-       << "Distance Pt2 - Pt1   =   " << p2.Distance(p1) << PointWithOther(p2.Distance(p1), false) << "\n"
-       << "Magnitude Pt1 =          " << p1.Magnitude()  << PointWithOther(p1.Magnitude(), true)   << "\n"
-       << "Magnitude Pt2 =          " << p2.Magnitude()  << PointWithOther(p2.Magnitude(), false)  << "\n"
-       << "Center Pt1 - Pt2 =       " << p1.Center(p2) << "\n"
-       << "Center Pt2 - Pt1 =       " << p2.Center(p1) << "\n"
-       << "Unit vector Pt1 =        " << p1.UnitVector() << "\n"
-       << "Unit vector Pt2 =        " << p2.UnitVector() << "\n";
+   myPrintLn(out, { fmtTxt, FmtStr1() }, "Center Pt1 - Pt2 =", p1.Center(p2));
+   myPrintLn(out, { fmtTxt, FmtStr2() }, "Center Pt2 - Pt1 =", p2.Center(p1));
+   myPrintLn(out, { fmtTxt, FmtStr1() }, "Unit vector Pt1 =",  p1.UnitVector());
+   myPrintLn(out, { fmtTxt, FmtStr2() }, "Unit vector Pt2 =",  p2.UnitVector());
+
+   if constexpr (SIZE1 == 3) {
+      myPrintLn(out, { fmtTxt, FmtStr1() }, "CrossProd(Pt1, Pt2) =",   p1.CrossProduct(p2));
+      myPrintLn(out, { fmtTxt, FmtStr1() }, "Magnitude of CrossP =",   p1.CrossProduct(p2).Magnitude());
+      myPrintLn(out, { fmtTxt, FmtStr1() }, "Unit vector of CrossP =", p1.CrossProduct(p2).UnitVector());
+      myPrintLn(out, { fmtTxt, FmtStr1() }, "Magnitude Unit of CP =",  p1.CrossProduct(p2).UnitVector().Magnitude());
+      }
 
    if constexpr (!(knd1 == MyDistanceKind::without || oth_knd == MyDistanceKind::without)) {
-      out << "Pt1 X  =         " << p1.X();
-      if constexpr (oth_knd != MyDistanceKind::without) out << " = " << p1.X<oth_knd>() << "\n";
-      else out << "\n";
-      out << "Pt1 Y  =         " << p1.Y();
-      if constexpr (oth_knd != MyDistanceKind::without) out << " = " << p1.Y<oth_knd>() << "\n";
-      else out << "\n";
+      if constexpr (oth_knd != MyDistanceKind::without) 
+         myPrintLn(out, { fmtTxt, FmtStr1(), " = ",  FmtStr1() }, "Pt1 X  =", p1.X(), p1.X<oth_knd>());
+      else 
+         myPrintLn(out, { fmtTxt, FmtStr1() }, "Pt1 X  =", p1.X());
+
+      if constexpr (oth_knd != MyDistanceKind::without) 
+         myPrintLn(out, { fmtTxt, FmtStr1(), " = ",  FmtStr1() }, "Pt1 Y  =", p1.Y(), p1.Y<oth_knd>());
+      else 
+         myPrintLn(out, { fmtTxt, FmtStr1() }, "Pt1 Y  =", p1.Y());
       if constexpr (SIZE1 == 3) {
-         out << "Pt1 Z =          " << p1.Z();
-         if constexpr (oth_knd != MyDistanceKind::without) out << " = " << p1.Z<oth_knd>() << "\n";
-         else out << "\n";
+         if constexpr (oth_knd != MyDistanceKind::without)
+            myPrintLn(out, { fmtTxt, FmtStr1(), " = ",  FmtStr1() }, "Pt1 Z  =", p1.Z(), p1.Z<oth_knd>());
+         else
+            myPrintLn(out, { fmtTxt, FmtStr1() }, "Pt1 Z  =", p1.Z());
          }
       }
-   out << "\n";
+   myPrintLn(out, { "\n Test for points ", FmtStr1(), " and ", FmtStr2(), "... done.\n" }, p1, p2);
    }
+
+
 
 void Test4Point(std::ostream& out) {
    out << "Method to test the MyPoint<> coordinates\n";
    // play with MyPoint
    // ------------------------------------------------------------------------------------------------------
    MyPoint<double, 3> test_without1(7.5, 2.1, 4.1), test_without2(4.3, 1.5, 1.0);
+   out << test_without1.Null_Point() << "\n";
+   out << -test_without1 << "\n";
    TestSequenze<MyDistanceKind::without>(out, "3d point without unit", test_without1, test_without2);
 
    // ------------------------------------------------------------------------------------------------------
@@ -192,61 +448,17 @@ void Test4Point(std::ostream& out) {
    out << "\nTests binary operations with different units and types\n";
    MyPoint<double, 3, MyDistanceKind::yards> test_yard_3d = { 23.0, 5.0, 0.0 };
    out << "Pkt_m_1 =           " << test_meter1 << "    = " << test_meter1.convert_to<MyDistanceKind::yards>() << "\n"
-      << "Pkt_y_3d =          " << test_yard_3d << " = " << test_yard_3d.convert_to<MyDistanceKind::meter>() << "\n";
+       << "Pkt_y_3d =          " << test_yard_3d << " = " << test_yard_3d.convert_to<MyDistanceKind::meter>() << "\n";
    out << "add meter + yard    " << test_meter1 + test_yard_3d << "\n"
-      << "add yard + meter    " << test_yard_3d + test_meter1 << "\n";
+       << "add yard + meter    " << test_yard_3d + test_meter1 << "\n";
 
 
-   out << "\nspecial Tests for conversions and binary operations with different units and types\n";
+   out << "\n\nspecial Tests for conversions and binary operations with different units and types\n";
    out << test_without1.X() << " as distance without unit combined with double values\n"
       << "5.0 + x = " << 5.0 + static_cast<double>(test_without1.X()) << "\n"
       << "x + 5.0 = " << test_without1.X() + 5.0 << "\n"
       << "x / 2 = " << test_without1.X() / 2 << "\n";
 
-   // following lines are errors
-   // out << 5.0 + static_cast<double>(test_meter1.X()) << "\n";
-   // out << 5.0 + test_meter1.X() << "\n";
-
-   /*
-   out << test1 + test2 << "\n";
-   out << "Point1 1:" << test1[0] << "\n";
-   out << test2.Distance( { 7.8000, 3.6000, 3.1000 } ) << "\n";
-   test1 *= 2;
-   out << test1 << "\n";
-
-   out << "\n";
-
-   //test1 = { 3.5, 2.1, 1.0 };
-   //test2 = { 4.3, 1.5, 2.1 };
-   test1 = { 2.0, 2.0, 1.0 };
-   test2 = { 1.0, 1.0, 0.0 };
-   auto len1 = test1.Magnitude();
-   auto len2 = test2.Magnitude();
-   auto prod = test1.ScalarProduct(test2);
-   auto pos  = test1.Angle(test2);
-   out << "Point1: " << test1 << " len = " << len1 << "\n";
-   out << "Point2: " << test2 << " len = " << len2 << "\n";
-   out << "ScalarProduct = " << prod << "\n";
-   out << "Angle: " << pos << "\n";
-
-   auto center = test1.Center(test2);
-   out << "Center: " << center << "\n";
-   auto unit = test1.UnitVector();
-   out << "Unit: " << unit << "\n"
-       << "Length = " << unit.Magnitude() << "\n";
-
-
-   prod = test1.ScalarProduct(test2);
-   auto magn = test1.Magnitude();
-
-   auto dist = test1.Distance(test2);
-   out << "Distance = " << dist << "\n";
-
-   //std::ranges::for_each(pos, [&out](auto const& val) { out << " - " << val << "\n";  });
-
-   //auto ret = test1.CalculatePointAtDistanceAndAngles(dist, pos);
-   //out << "ret = " << ret << "\n";
-   */
-}
+   }
 
 } // end namespace

@@ -1,5 +1,10 @@
 ﻿#pragma once
 
+#if __has_include("MyCheck.h")
+#include "MyCheck.h"
+#elif __has_include("System/MyCheck.h")
+#include "System/MyCheck.h"
+#endif
 
 #include <iostream>
 #include <cmath>
@@ -42,7 +47,7 @@ class MyAngle {
    template <MyAngleKind oth_knd, my_param_angle oth_ty = ty>
       requires my_param_angle_Valid<oth_ty, oth_knd>
    friend MyAngle<ty, kind> operator + (MyAngle<ty, kind> const& lhs, MyAngle<oth_ty, oth_knd> const& rhs) {
-      return MyAngle<ty, kind> { lhs } += rhs.convert_to<kind, ty>();
+      return MyAngle<ty, kind> { lhs } += rhs; // rhs.convert_to<kind, ty>();
       }
 
    template <MyAngleKind oth_knd, my_param_angle oth_ty = ty>
@@ -52,47 +57,33 @@ class MyAngle {
       }
 
    template <my_angle_param oth_ty>
-      requires my_param_angle_Valid<oth_ty, oth_knd>
+   //   requires my_param_angle_Valid<oth_ty>
    friend MyAngle<ty, kind> operator * (MyAngle<ty, kind> const& lhs, oth_ty const& rhs) {
       return MyAngle<ty, kind> { lhs } *= rhs;
       }
 
    template <my_angle_param oth_ty>
-      requires my_param_angle_Valid<oth_ty, oth_knd>
+   //   requires my_param_angle_Valid<oth_ty>
    friend MyAngle<ty, kind> operator / (MyAngle<ty, kind> const& lhs, oth_ty const& rhs) {
       return MyAngle<ty, kind> { lhs } /= rhs;
       }
 
    public:
+      using value_type = ty;
+      static const constinit MyCheckKind check_level = MyCheckKind::input;
       MyAngle(void) = default;
 
       template <typename oth_ty>
-      MyAngle(oth_ty const& val, std::enable_if_t<std::is_floating_point_v<oth_ty> || my_integral_param<oth_ty>, bool>* = nullptr) {
+      explicit MyAngle(oth_ty const& val, std::enable_if_t<std::is_floating_point_v<oth_ty> || my_integral_param<oth_ty>, bool>* = nullptr) {
          if constexpr (std::is_same_v<ty, oth_ty>) Angle(val);
          else Angle(static_cast<ty>(val));
          }
 
-      /*
-      template <MyAngleKind other_kind, std::floating_point OtherTy>
-      MyAngle(MyAngle<OtherTy, other_kind> const& other) {
-         if constexpr (other_kind == kind) {
-            flAngle = static_cast<ty>(other.flAngle);
-            }
-         if constexpr (other_kind == MyAngleKind::degree && kind == MyAngleKind::radian) {
-            flAngle = static_cast<ty>(other.convert_to<MyAngleKind::radian>());
-            }
-         else if constexpr (other_kind == MyAngleKind::radian && kind == MyAngleKind::degree) {
-            flAngle = static_cast<ty>(other.convert_to<MyAngleKind::degree>());
-            }
-         else static_assert(always_false_angle<kind>, "invalid kind of angle");
-         }
-      */
-
-      MyAngle(MyAngle const& other) : flAngle(other.Angle()) { }
+      MyAngle(MyAngle const& other) : theAngle(other.Angle()) { }
 
       template <MyAngleKind oth_knd, std::floating_point oth_ty = ty, typename = std::enable_if_t<kind == oth_knd && std::is_same_v<ty, oth_ty>>>
       MyAngle(MyAngle<oth_ty, oth_knd>&& other) noexcept {
-         std::swap(flAngle, other.flAngle);
+         std::swap(theAngle, other.theAngle);
          }
 
       template <MyAngleKind oth_knd, std::floating_point oth_ty = ty>
@@ -103,7 +94,7 @@ class MyAngle {
       
       template <MyAngleKind oth_knd, std::floating_point oth_ty = ty, typename = std::enable_if_t<kind == oth_knd && std::is_same_v<ty, oth_ty>>>
       MyAngle& operator = (MyAngle&& other) noexcept {
-         std::swap(flAngle, other.flAngle);
+         std::swap(theAngle, other.theAngle);
          return *this;
          }
 
@@ -112,8 +103,8 @@ class MyAngle {
       auto operator <=> (MyAngle<OtherTy, other_kind> const& ref) const {
          static const double epsilon = 1e-6; // Toleranz für Rundungsdifferenzen
          const ty comp = ref.convert_to<kind>().Angle();
-         if (std::fabs(flAngle - comp) < epsilon) return std::strong_ordering::equal;
-         else if (flAngle < comp) return std::strong_ordering::less;
+         if (std::fabs(theAngle - comp) < epsilon) return std::strong_ordering::equal;
+         else if (theAngle < comp) return std::strong_ordering::less;
          else return std::strong_ordering::greater;
          }
      
@@ -136,25 +127,75 @@ class MyAngle {
       template <MyAngleKind other_kind, std::floating_point OtherTy = ty>
       bool operator >= (MyAngle<OtherTy, other_kind> const& ref)  const { return (*this <=> ref) >= 0; }
 
-      explicit operator ty& (void) & { return flAngle; }
-      explicit operator ty const& (void) const& { return flAngle; }
+      explicit operator ty& (void) & { return theAngle; }
+      explicit operator ty const& (void) const& { return theAngle; }
 
       operator std::string(void) const { 
-         if constexpr (kind == MyAngleKind::degree) return std::format("{} deg", flAngle);
-         else if constexpr (kind == MyAngleKind::radian) return std::format("{} rad", flAngle);
+         if constexpr (kind == MyAngleKind::degree) return std::format("{} deg", theAngle);
+         else if constexpr (kind == MyAngleKind::radian) return std::format("{} rad", theAngle);
          else static_assert(always_false_angle<kind>, "invalid kind of angle for operator std::string");
          }
 
-      template <MyAngleKind oth_knd, my_angle_param oth_ty>
+      MyAngle operator - () const { return MyAngle(-theAngle); }
+
+      /**
+       * @brief += operator for the class MyAngle
+       * @tparam oth_knd MyAngleKind with the representation of the angle
+       * @tparam oth_ty type for the value
+       * @tparam check 
+       * @param other 
+       * @return value as oth_ty with the angle in the requested kind
+      */
+      template <MyAngleKind oth_knd, my_angle_param oth_ty, MyCheckKind check = check_level>
       MyAngle& operator += (MyAngle<oth_ty, oth_knd> const& other) {
-         flAngle += create_from<oth_knd>(other).Angle();
-         Normalize();
+         if constexpr (check == MyCheckKind::input || check == MyCheckKind::all) {
+            // common type for ty and oth_ty for the operations
+            using ResultType = typename std::common_type<ty, oth_ty>::type;
+            if(theAngle < std::numeric_limits<ResultType>::min() || theAngle > std::numeric_limits<ResultType>::max()) {
+               throw std::runtime_error("loss of precision in conversion for the value of this angle.");
+               }
+            if (oth_ty flTmpAngle = other.Angle<oth_knd, oth_ty>();
+                  flTmpAngle < std::numeric_limits<ResultType>::min() || flTmpAngle > std::numeric_limits<ResultType>::max()) {
+               throw std::runtime_error("loss of precision in conversion for the parameter of the operation.");
+               }
+
+            ResultType thisAngle = static_cast<ResultType>(theAngle);
+            ResultType otherAngle = other.Angle<kind, ResultType>();
+            if ((thisAngle > 0 && otherAngle > std::numeric_limits<ResultType>::max() - thisAngle) ||
+                (thisAngle < 0 && otherAngle < std::numeric_limits<ResultType>::min() - thisAngle)) {
+               throw std::overflow_error("overflow in addition");
+               }
+
+            ResultType resultAngle = thisAngle + otherAngle;
+            if (resultAngle < std::numeric_limits<ty>::min() || resultAngle > std::numeric_limits<ty>::max()) {
+               throw std::runtime_error("loss of precision in conversion for the value of this angle after operation.");
+               }
+
+            if constexpr (std::is_floating_point_v<ResultType>) {
+               if (std::abs(otherAngle) > std::numeric_limits<ResultType>::epsilon() &&
+                   std::abs(resultAngle - thisAngle) < std::numeric_limits<ResultType>::epsilon()) {
+                  throw std::runtime_error("catastrophic loss of precision");
+                  }
+               }
+
+            theAngle = static_cast<ty>(resultAngle);
+            }
+         else  // without check
+            theAngle += create_from<oth_knd>(other).Angle();
+
+         if constexpr (check == MyCheckKind::output || check == MyCheckKind::all) {
+            if constexpr (std::is_floating_point_v<oth_ty>) {
+               if (std::isnan(theAngle)) throw std::runtime_error("the result isn't a numeric number (NaN).");
+               if (std::isinf(theAngle)) throw std::runtime_error("the result is a positive or negative infinity.");
+               }
+            Normalize();
+            }
          return *this;
          }
 
       template <MyAngleKind oth_knd, my_angle_param oth_ty>
       MyAngle& operator -= (MyAngle<oth_ty, oth_knd> const& other) {
-         flAngle -= create_from<oth_knd>(other).Angle();
+         theAngle -= other.Angle<oth_knd, oth_ty>();
          Normalize();
          return *this;
          }
@@ -190,11 +231,17 @@ class MyAngle {
 
       /// selector for the datalement with the value of the angle in the unit
 
-      template <MyAngleKind oth_knd = kind>
-      constexpr std::conditional_t<oth_knd == kind, ty const&, ty> Angle(void) const {
-         if constexpr (oth_knd == kind) return flAngle;
-         else if constexpr (oth_knd == MyAngleKind::degree && kind == MyAngleKind::radian) return flAngle * 180.0 / std::numbers::pi_v<ty>; 
-         else if constexpr (oth_knd == MyAngleKind::radian && kind == MyAngleKind::degree) return flAngle * std::numbers::pi_v<ty> / 180.0;
+      template <MyAngleKind oth_knd = kind, my_angle_param oth_ty = ty>
+      constexpr std::conditional_t<(oth_knd == kind) && std::is_same_v<oth_ty, ty>, ty const&, ty> Angle(void) const {
+         if constexpr ((oth_knd == kind) && std::is_same_v<oth_ty, ty>) return theAngle;
+         else if constexpr (oth_knd == MyAngleKind::degree && kind == MyAngleKind::radian) {
+            if constexpr (std::is_same_v<oth_ty, ty>) return theAngle * 180.0 / std::numbers::pi_v<ty>;
+            else return static_cast<oth_ty>(theAngle * 180.0 / std::numbers::pi_v<ty>);
+            }
+         else if constexpr (oth_knd == MyAngleKind::radian && kind == MyAngleKind::degree) {
+            if constexpr (std::is_same_v<oth_ty, ty>) return theAngle * std::numbers::pi_v<ty> / 180.0;
+            else static_cast<oth_ty>(theAngle * std::numbers::pi_v<ty> / 180.0);
+            }
          else static_assert(always_false_angle<kind>, "invalid kind of angle");
          }
 
@@ -206,7 +253,7 @@ class MyAngle {
 
       /* example for a function with exist only for conditions
       template <MyAngleKind other_kind = kind, typename = std::enable_if_t<other_kind == MyAngleKind::degree>>
-      ty toRadians(void) const { return flAngle * std::numbers::pi_v<ty> / 180.0; }
+      ty toRadians(void) const { return theAngle * std::numbers::pi_v<ty> / 180.0; }
       */
       template <typename oth_ty = ty>
       std::conditional_t<(kind == MyAngleKind::radian && std::is_same_v<ty, oth_ty>), oth_ty const&, oth_ty> toRadians(void) const {
@@ -226,26 +273,26 @@ class MyAngle {
       
       void Angle(my_angle_param auto const& val) { 
          using oth_ty = decltype(val);
-         if constexpr (std::is_same_v<ty, oth_ty>) flAngle = val;
+         if constexpr (std::is_same_v<ty, oth_ty>) theAngle = val;
          else {
-            if constexpr (std::is_integral_v<ty> && !std::is_integral_v<oth_ty>) flAngle = std::round(val);
-            else flAngle = static_cast<ty>(val);
+            if constexpr (std::is_integral_v<ty> && !std::is_integral_v<oth_ty>) theAngle = std::round(val);
+            else theAngle = static_cast<ty>(val);
             }
          }
 
-      void Angle(std::string_view val) { auto result = std::from_chars(val.data(), val.data() + val.size(), flAngle); }
+      void Angle(std::string_view val) { auto result = std::from_chars(val.data(), val.data() + val.size(), theAngle); }
 
 
       void Normalize() {
          if constexpr (kind == MyAngleKind::degree) {
             static constinit ty max_val = 360.0;
-            while (flAngle < 0)        flAngle += max_val; 
-            while (flAngle >= max_val) flAngle -= max_val; 
+            while (theAngle < 0)        theAngle += max_val; 
+            while (theAngle >= max_val) theAngle -= max_val; 
             }
          else if constexpr (kind == MyAngleKind::radian) {
             static constinit ty max_val = 2 * std::numbers::pi_v<ty>;
-            while (flAngle < 0.0)      flAngle += max_val;
-            while (flAngle >= max_val) flAngle -= max_val; 
+            while (theAngle < 0.0)      theAngle += max_val;
+            while (theAngle >= max_val) theAngle -= max_val; 
             }
          else static_assert(always_false_angle<kind>, "invalid kind of angle in Normalize");
          }
@@ -257,7 +304,7 @@ class MyAngle {
          if (minAngle < 0 || maxAngle > 360) {
             throw std::invalid_argument("A parameter for checking an angle is out of range");
          }
-         return (flAngle >= minAngle && flAngle <= maxAngle);
+         return (theAngle >= minAngle && theAngle <= maxAngle);
          }
 
 
@@ -267,13 +314,13 @@ class MyAngle {
          if (minAngle < 0 || maxAngle > 2 * std::numbers::pi_v<ty>) {
             throw std::invalid_argument("A parameter for checking an angle is out of range");
             }
-         return (flAngle >= minAngle && flAngle <= maxAngle);
+         return (theAngle >= minAngle && theAngle <= maxAngle);
          }
 
 
 
       template <MyAngleKind other_knd = kind, std::floating_point oth_ty, typename = std::enable_if_t<other_knd == MyAngleKind::degree>>
-      void fromRadians(oth_ty const& val) { flAngle = convert<MyAngleKind::radian>(val); }
+      void fromRadians(oth_ty const& val) { theAngle = convert_to<MyAngleKind::radian>(val); }
 
       template <std::floating_point oth_ty = ty>
       auto sin(void) const {
@@ -315,7 +362,7 @@ class MyAngle {
          }
 
    private:
-      ty flAngle;
+      ty theAngle;
 
 
    public:
@@ -364,6 +411,29 @@ class MyAngle {
          }
 
    };
+
+   template <my_param_angle ty, MyAngleKind kind>
+   struct std::formatter<MyAngle<ty, kind>> : std::formatter<std::string_view> {
+      std::string format_string;
+
+      constexpr auto parse(std::format_parse_context& ctx) {
+         auto pos = ctx.begin();
+         format_string = "{:";
+         while (pos != ctx.end() && *pos != '}') {
+            format_string += *pos;
+            ++pos;
+         }
+         format_string += "} {}";
+         return pos; 
+         }
+
+      auto format(MyAngle<ty, kind> const& val, std::format_context& ctx) {
+         std::string temp;
+         std::vformat_to(std::back_inserter(temp), format_string, std::make_format_args(val.Angle(), val.unit()));
+         return std::formatter<std::string_view>::format(temp, ctx);
+         }
+   };
+
 
 
 // ----------------------------------------------------------------------------------

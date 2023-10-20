@@ -48,6 +48,22 @@ enum class ENumberStatus : uint32_t {
       unknown
    };
 
+/** Internal enumeration type with the types of checks. This type is used so that runtime decisions
+are avoided in a central checking method */
+enum class EInternChecks : uint32_t {
+     none = 0,
+     add,
+     substract,
+     increment,
+     decrement,
+     unary_minus,
+     multiply,
+     divide,
+     modulo,
+     assign,
+     function,
+     unknown
+   };
 
 template <>
 struct std::formatter<ENumberStatus> : std::formatter<std::string_view> {
@@ -65,30 +81,34 @@ struct std::formatter<ENumberStatus> : std::formatter<std::string_view> {
          case ENumberStatus::range:         out = "range";         break;
          case ENumberStatus::unexpected:    out = "unexpected";    break;
          case ENumberStatus::unknown:       out = "unknown";       break;
-         default: out = "undefined";
          }
       return formatter<string_view>::format(out, ctx);
       }
    };
 
+template <>
+struct std::formatter<EInternChecks> : std::formatter<std::string_view> {
+   template <typename FormatContext>
+   auto format(EInternChecks t, FormatContext& ctx) {
+      string_view out = "undefined";
+      switch (t) {
+         case EInternChecks::none:        out = "none";           break;
+         case EInternChecks::add:         out = "addition";       break;
+         case EInternChecks::substract:   out = "substraction";   break;
+         case EInternChecks::increment:   out = "increment";      break;
+         case EInternChecks::decrement:   out = "decrement";      break;
+         case EInternChecks::unary_minus: out = "unary minus";    break;
+         case EInternChecks::multiply:    out = "multiplication"; break;
+         case EInternChecks::divide:      out = "division";       break;
+         case EInternChecks::modulo:      out = "modulo";         break;
+         case EInternChecks::assign:      out = "assignment";     break;
+         case EInternChecks::function:    out = "function";       break;
+         case EInternChecks::unknown:     out = "unknown";        break;
+         }
+      return formatter<string_view>::format(out, ctx);
+   }
+};
 
-
-/** Internal enumeration type with the types of checks. This type is used so that runtime decisions 
-are avoided in a central checking method */
-enum class EInternChecks : uint32_t {
-      none = 0,
-      add,
-      substract,
-      increment,
-      decrement,
-      unary_minus,
-      multiply,
-      divide,
-      modulo,
-      assign,
-      function, 
-      unknown
-   };
 
 enum class ENumberSafety : uint32_t {
       without            =   0,
@@ -584,11 +604,11 @@ class MySafeNumber final :
             this->status = other.status;
          }
 
+      // ============================================================================================
+
       // method for unary operations
       /*
       enum class EInternChecks : uint32_t {
-      add,         substract,    multiply,     divide,    modulo,
-      increment,   decrement,    unary_minus,
       assign,
       */
       template <typename exception_ty> 
@@ -599,11 +619,11 @@ class MySafeNumber final :
             Status(stat);
             }
          if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withTrace>()) {
-            Trace<true>(strMessage, std::cerr, loc, now);
+            Trace<true>(std::format("[{}] - {}: {}", kind, stat, strMessage), std::cerr, loc, now);
             Trace<true>("called at: ", std::cerr);
             }
          if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withException>()) {
-            throw TMy_StandardError<exception_ty>(strMessage, loc, now);
+            throw TMy_StandardError<exception_ty>(std::format("{2:}\n[{0:}] - Status {1:}", kind, stat, strMessage), loc, now);
             }
          }
 
@@ -640,15 +660,15 @@ class MySafeNumber final :
          else if constexpr (CheckKind == EInternChecks::decrement) {
             if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withOptionalChecks>()) {
                if (!CheckOpional(CheckKind, loc, now)) return;
-            }
+               }
             if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withIntervalChecks>()) {
                if (Value() > Minimum()) --Number();
                else Message<std::range_error>(CheckKind, ENumberStatus::range, "interval error detected in MySafeNumber", loc, now);
-            }
+               }
             else if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withOverflowChecks>()) {
                if (Value() > std::numeric_limits<ty>::min()) --Number();
                else Message<std::underflow_error>(CheckKind, ENumberStatus::underflow, "underflow error detected in MySafeNumber", loc, now);
-            }
+               }
             else --Number();
             }
          //----------------------------------------------------------------------------------------

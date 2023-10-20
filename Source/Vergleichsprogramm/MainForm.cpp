@@ -26,8 +26,9 @@ MainForm::MainForm(QWidget *parent)
     connect(ui.actCreateBlnOld,    &QAction::triggered, [this]() { processes().CreateStructureBlnOld(); });
     connect(ui.actImportBlnOld,    &QAction::triggered, [this]() { processes().ImportBerlinOld(); });
 
-
+    
     processes().Init(TMyForm(this, false));
+    statusLabel->setText(qVersion());
 
     Test();
    }

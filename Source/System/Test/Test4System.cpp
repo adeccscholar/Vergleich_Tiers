@@ -64,7 +64,23 @@ void FillVector(MySafeVector<int>& result, size_t count) {
     if (exceptions & FE_INVALID)   out << "FE_INVALID was triggered: Invalid operation detected." << std::endl;
     }
 
+
+ 
  void Test4Numbers(std::ostream& out) {
+
+    std::vector<std::string> vecInputPath =  { "D:\\Projekte\\GitHub\\Vergleich_Schichten\\Source\\System\\MySafeNumber.h",
+                                               "D:\\System\\MySafeNumber.h",
+                                               "D:\\MySafeNumber.h",
+                                               "MySafeNumber.h",
+                                               "D:"s,
+                                               "D:\\"s,
+                                               ""s };
+    for(auto const& inputPath : vecInputPath) {
+       std::cerr << "Ursprünglicher Pfad: " << inputPath << std::endl;
+       std::cerr << "Vereinfachter Pfad: "  << TMyExceptionInformation::cutPath(inputPath) << std::endl;
+       }
+
+
     out << "Size of bool: " << sizeof(bool) << " bytes" << std::endl;
     out << "Size of optional<int>: " << sizeof(std::optional<int>) << " bytes" << std::endl;
     out << "Test MySafeNumber\n";

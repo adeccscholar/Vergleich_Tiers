@@ -6,6 +6,8 @@
 #include <System/MySafeVector.h>
 #include <System/MySafeNumber.h>
 
+#include "MyTestSuite.h"
+
 #include <cmath>
 #include <iomanip>
 #include <sstream>
@@ -14,6 +16,7 @@
 #include <random>
 #include <functional>
 #include <algorithm>
+#include <ranges>
 
 #include <limits>
 #include <cfenv>
@@ -66,37 +69,96 @@ void FillVector(MySafeVector<int>& result, size_t count) {
 
 
  
+void Test4Path(std::ostream& out) {
+   std::vector<std::string> vecInputPath = { "D:\\Projekte\\GitHub\\Vergleich_Schichten\\Source\\System\\MySafeNumber.h",
+                                             "D:\\System\\MySafeNumber.h",
+                                             "D:\\MySafeNumber.h",
+                                             "MySafeNumber.h",
+                                             "D:"s,
+                                             "D:\\"s,
+                                             "/"s,
+                                             ""s };
+   for (auto const& inputPath : vecInputPath) {
+      out << "Ursprünglicher Pfad: " << inputPath << std::endl;
+      out << "Vereinfachter Pfad: " << TMyExceptionInformation::cutPath(inputPath) << std::endl;
+      }
+
+
+   TMyExceptionInformation test_info;
+   out << test_info.FilePosition() << "\n";
+   out << TMyExceptionInformation::FilePosition(src_loc::current()) << "\n";
+   }
+
  void Test4Numbers(std::ostream& out) {
+    static_assert(MySafety::is_my_safe_number_type<MySafety::TNumber<int, 10>>, "TNumber concept don't work.");
 
-    std::vector<std::string> vecInputPath =  { "D:\\Projekte\\GitHub\\Vergleich_Schichten\\Source\\System\\MySafeNumber.h",
-                                               "D:\\System\\MySafeNumber.h",
-                                               "D:\\MySafeNumber.h",
-                                               "MySafeNumber.h",
-                                               "D:"s,
-                                               "D:\\"s,
-                                               ""s };
-    for(auto const& inputPath : vecInputPath) {
-       std::cerr << "Ursprünglicher Pfad: " << inputPath << std::endl;
-       std::cerr << "Vereinfachter Pfad: "  << TMyExceptionInformation::cutPath(inputPath) << std::endl;
-       }
+    TestSuite tests("check implementations of MySafety::TNumber", out);
+
+    tests.Check_fn_exception<std::runtime_error>("test to construct a int number with long long value and strict types", [&out]() {
+       MySafety::TNumber<int, MySafety::combineNumberSafety(MySafety::ENumberSafety::withException,
+                                                            MySafety::ENumberSafety::withStrictTypes,
+                                                            //MySafety::ENumberSafety::withPosition,
+                                                            MySafety::ENumberSafety::withAdditionalData,
+                                                            MySafety::ENumberSafety::withOptionalChecks)> snll{ 0ll };
+       });
+
+    tests.Check_fn_exception<std::runtime_error>("assignment of negative value to a unsigned Number: ", [&out]() {
+               MySafety::TNumber<uint32_t> su;
+               su = -1;
+               out << su << "\n";
+               });
+
+    tests.Check_fn_exception<std::runtime_error>("assignment of negative value with declaration to a unsigned Number: ", [&out]() {
+       MySafety::TNumber<uint32_t> su = -1;
+       out << su << "\n";
+       });
 
 
+    tests.Check_fn("test assignment with a TValue auf the same type", [&out]() {
+               MySafety::TNumber<int> sn{ 25 };
+               MySafety::TValue<int, false> tttt(30);
+               sn = tttt;
+               out << "\nvalue = " << sn << "\n";
+               });
+
+    tests.Check_fn("test empty number", [&out]() {
+               MySafety::TNumber<int> e;
+               out << "\nvalue = " << e << "\n";
+               });
+
+    tests.Check_fn_exception("test to construct a int number with a to small long long value", [&out]() {
+               MySafety::TNumber<int> snll { std::numeric_limits<long long>::min() };
+               });
+
+    tests.Check_fn_exception("test to assign a int with a to large unsigned int value", [&out]() {
+               MySafety::TNumber<int> snll;
+               //MySafety::TNumber<int> snll{ std::numeric_limits<uint32_t>::max() };
+               //snll = std::numeric_limits<uint32_t>::max();
+               snll = MySafety::TValue(std::numeric_limits<uint32_t>::max());
+               });
+
+    tests.Finish();
+/*
     out << "Size of bool: " << sizeof(bool) << " bytes" << std::endl;
+    out << "Size of int:  " << sizeof(int) << " bytes" << std::endl;
     out << "Size of optional<int>: " << sizeof(std::optional<int>) << " bytes" << std::endl;
-    out << "Test MySafeNumber\n";
-    //MySafeNumber<int, ENumberSafety::withAdditionalData> sn(25);
-    //sn.Status(ENumberStatus::initialized);
-    //MySafeNumber<int> sn(25);
-    //if (!sn) out << "empty\n";
-    MySafeNumber sn { 25 };
+
+    out << "\nTest MySafety::TNumber\n";
+;
+    MySafety::TNumber<int> sn { 25 };
     out << "Size of SafeNumber: " << sizeof(sn) << " bytes" << std::endl;
-    MySafeNumber nsn{ -sn };
-    MySafeNumber<int, combineNumberSafety(ENumberSafety::withException, ENumberSafety::withTrace, ENumberSafety::withOptionalChecks)> sn_o { 1 };
+    MySafety::TNumber<int> nsn{ -25 };
+    
+    long long val = 1;
+    MySafety::TNumber<int, MySafety::combineNumberSafety(MySafety::ENumberSafety::withException,
+                                                         MySafety::ENumberSafety::withStrictTypes,
+                                                         //MySafety::ENumberSafety::withPosition,
+                                                         MySafety::ENumberSafety::withOptionalChecks)> sn_o{ val };
     try {
        out << (sn +  5) << "\n";
        out << (sn * 50) << "\n";
        out << (sn /  5) << "\n";
-       out << sn.pow(2) << "\n";
+      // out << sn.pow(2) << "\n";
        out << nsn << "\n";
        out << nsn.abs() << "\n";
        out << ++sn_o << "\n";
@@ -111,113 +173,61 @@ void FillVector(MySafeVector<int>& result, size_t count) {
     out << "\nadditional test for preparation\n";
     int testabs = std::abs(std::numeric_limits<int>::min());
     out << testabs << " : " << std::numeric_limits<int>::min() << " ... " << std::numeric_limits<int>::max() << std::endl;
-    
-    long long constexpr value0 = std::numeric_limits<long long>::max();
-    double constexpr value1 = static_cast<double>(std::numeric_limits<long long>::max());
-    double constexpr value2 = static_cast<double>(std::numeric_limits<double>::max());
-
-    std::feclearexcept(FE_ALL_EXCEPT);
-    long long value3 = static_cast<long long>(std::numeric_limits<double>::max());
-    TestFPEnv(std::fetestexcept(FE_ALL_EXCEPT), out);
-
-    out << "\n\nMaximal long long: " << value0 << std::endl
-        << "Maximal double as long long: " << value3 << std::endl
-        << "Maximal long long as double: " << value1 << std::endl
-        << "Maximal double: " << value2 << std::endl;
-
-    MyNumbers test1, test2(3.0);
-    out << "Method to test the MyNumber class\n";
-    out << "test1 = " << test1 << "\n";
-    out << "test2 = " << test2 << "\n";
-    out << "test1 + 5 = " << test1 + 5 << "\n";
-    test1 += 5;
-    out << "Test1 + test2 = " << test1 + test2 << "\n";
-
-    // "Overflow" für Gleitkommazahlen
-    out  << std::boolalpha << std::scientific;
-    test1 = DBL_MAX;
-    test2 = DBL_MIN;
-    out << "test1 = " << test1 << " / " << std::isinf(test1) << "\n";
-    out << "test2 = " << test2 << " / " << std::isinf(test1) << "\n";
-    out << "epsilon = " << std::numeric_limits<double>::epsilon() << " / " << std::isnan(std::numeric_limits<double>::epsilon()) << "\n";
-    test1 *= 2.0;
-    test2 /= 2.0;
-    out << "test1 = " << test1 << " / " << std::isinf(test1) << "\n";
-    out << "test2 = " << test2 << " / " << std::isinf(test1) << "\n";
-
-    out << "epsilon = " << std::numeric_limits<double>::epsilon() << "\n";
-    out << "min     = " << std::numeric_limits<double>::min() << "\n";
-    out << "max     = " << std::numeric_limits<double>::max() << "\n";
-      
-    out << "\n\nInf ? " << (float)std::numeric_limits<double>::max() << "\n";
-    double from1 = 0, to1 = std::nextafter(from1, 1.);
-    out << "The next representable double after " << std::setprecision(20) << from1
-       << " is " << to1
-       << std::hexfloat << " (" << to1 << ")\n" << std::defaultfloat;
-
-    std::feclearexcept(FE_ALL_EXCEPT);
-    out << "1.0/0.0 = " << 1.0 / zero_val << '\n';
-    if (std::fetestexcept(FE_DIVBYZERO))
-       out << "division by zero reported\n";
-    else
-       out << "division by zero not reported\n";
-
-    std::feclearexcept(FE_ALL_EXCEPT);
-    out << "1.0/10 = " << 1. / 10 << '\n';
-    if (std::fetestexcept(FE_INEXACT))
-       out << "inexact result reported\n";
-    else
-       out << "inexact result not reported\n";
-
-
-    double result = std::numeric_limits<double>::max(); // Maximaler Wert für double
-    result = result * 2.0; // Versuch eines Überlaufs
-
-    // Prüfen, ob FE_OVERFLOW ausgelöst wurde
-    if (std::fetestexcept(FE_OVERFLOW)) {
-       out << "FE_OVERFLOW wurde ausgelöst: Überlauf erkannt." << std::endl;
-    }
-    else {
-       out << "FE_OVERFLOW wurde nicht ausgelöst: Kein Überlauf erkannt." << std::endl;
+    */
     }
 
-    double constexpr base = std::numeric_limits<double>::max(); // Maximaler Wert für double
-    double constexpr exponent = 2.0; // Große Potenz
+void Test4Positions(std::ostream& out) {
+   MySafety::myPositions<int, 12> pos;
+   int i = 0;
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   //*
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", i++, true, MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   //*/
+   for (int i = 0;  auto const& val : pos.view()  ) {
+      out << std::format("{:2d}: {}\n", ++i, val);
+      }
 
-    result = std::pow(base, exponent); // Potenzberechnung
+   pos.clear();
+   out << "leer\n";
+   i = 0;
+   pos.push({ "Testmeldung", i++, std::nullopt,  std::nullopt, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", 0, false,   MySafety::ENumberStatus::ok, src_loc::current(), std::chrono::system_clock::now() });
+   pos.push({ "Testmeldung", 0, false,   MySafety::ENumberStatus::uninitialized, src_loc::current(), std::chrono::system_clock::now() });
+   for (int i = 0; auto val : pos.view()) {
+      out << std::format("{:2d}: {}\n", ++i, val);
+      }
+   }
 
-    // Prüfen, ob FE_OVERFLOW ausgelöst wurde
-    if (std::fetestexcept(FE_OVERFLOW)) {
-       out << "Pow FE_OVERFLOW wurde ausgelöst: Überlauf erkannt." << std::endl;
-    }
-    else {
-       out << "Pow FE_OVERFLOW wurde nicht ausgelöst: Kein Überlauf erkannt." << std::endl;
-    }
-
-
-    std::feclearexcept(FE_ALL_EXCEPT);
-
-    result = std::numeric_limits<double>::min(); // Kleiner als der kleinste darstellbare Wert für double
-    result = result / 20000000000000000.0; // Versuch eines Unterlaufs
-
-    // Prüfen, ob FE_UNDERFLOW ausgelöst wurde
-    if (std::fetestexcept(FE_UNDERFLOW)) {
-       out << "FE_UNDERFLOW wurde ausgelöst: Unterlauf erkannt." << std::endl;
-    }
-    else {
-       out << "FE_UNDERFLOW wurde nicht ausgelöst: Kein Unterlauf erkannt." << std::endl;
-    }
-    /*
-    std::feclearexcept(FE_ALL_EXCEPT);
-    out << "pow = " <<  << '\n';
-    if (std::fetestexcept(FE_INEXACT))
-       out << "inexact result reported\n";
-    else
-       out << "inexact result not reported\n";
-
-     */
-
-    }
 
 // --------------------------------------------------------------
 // method to call and test instances of the class MyDistance
@@ -256,6 +266,113 @@ void Test4Distance(std::ostream& out) {
 
    out << "\nTest passed.\n\n";
 }
+
+void Test4FPE(std::ostream& out) {
+   long long constexpr value0 = std::numeric_limits<long long>::max();
+   double constexpr value1 = static_cast<double>(std::numeric_limits<long long>::max());
+   double constexpr value2 = static_cast<double>(std::numeric_limits<double>::max());
+
+   std::feclearexcept(FE_ALL_EXCEPT);
+   long long value3 = static_cast<long long>(std::numeric_limits<double>::max());
+   TestFPEnv(std::fetestexcept(FE_ALL_EXCEPT), out);
+
+   out << "\n\nMaximal long long: " << value0 << std::endl
+      << "Maximal double as long long: " << value3 << std::endl
+      << "Maximal long long as double: " << value1 << std::endl
+      << "Maximal double: " << value2 << std::endl;
+
+   MyNumbers test1, test2(3.0);
+   out << "Method to test the MyNumber class\n";
+   out << "test1 = " << test1 << "\n";
+   out << "test2 = " << test2 << "\n";
+   out << "test1 + 5 = " << test1 + 5 << "\n";
+   test1 += 5;
+   out << "Test1 + test2 = " << test1 + test2 << "\n";
+
+   // "Overflow" für Gleitkommazahlen
+   out << std::boolalpha << std::scientific;
+   test1 = DBL_MAX;
+   test2 = DBL_MIN;
+   out << "test1 = " << test1 << " / " << std::isinf(test1) << "\n";
+   out << "test2 = " << test2 << " / " << std::isinf(test1) << "\n";
+   out << "epsilon = " << std::numeric_limits<double>::epsilon() << " / " << std::isnan(std::numeric_limits<double>::epsilon()) << "\n";
+   test1 *= 2.0;
+   test2 /= 2.0;
+   out << "test1 = " << test1 << " / " << std::isinf(test1) << "\n";
+   out << "test2 = " << test2 << " / " << std::isinf(test1) << "\n";
+
+   out << "epsilon = " << std::numeric_limits<double>::epsilon() << "\n";
+   out << "min     = " << std::numeric_limits<double>::min() << "\n";
+   out << "max     = " << std::numeric_limits<double>::max() << "\n";
+
+   out << "\n\nInf ? " << (float)std::numeric_limits<double>::max() << "\n";
+   double from1 = 0, to1 = std::nextafter(from1, 1.);
+   out << "The next representable double after " << std::setprecision(20) << from1
+      << " is " << to1
+      << std::hexfloat << " (" << to1 << ")\n" << std::defaultfloat;
+
+   std::feclearexcept(FE_ALL_EXCEPT);
+   out << "1.0/0.0 = " << 1.0 / zero_val << '\n';
+   if (std::fetestexcept(FE_DIVBYZERO))
+      out << "division by zero reported\n";
+   else
+      out << "division by zero not reported\n";
+
+   std::feclearexcept(FE_ALL_EXCEPT);
+   out << "1.0/10 = " << 1. / 10 << '\n';
+   if (std::fetestexcept(FE_INEXACT))
+      out << "inexact result reported\n";
+   else
+      out << "inexact result not reported\n";
+
+
+   double result = std::numeric_limits<double>::max(); // Maximaler Wert für double
+   result = result * 2.0; // Versuch eines Überlaufs
+
+   // Prüfen, ob FE_OVERFLOW ausgelöst wurde
+   if (std::fetestexcept(FE_OVERFLOW)) {
+      out << "FE_OVERFLOW wurde ausgelöst: Überlauf erkannt." << std::endl;
+      }
+   else {
+      out << "FE_OVERFLOW wurde nicht ausgelöst: Kein Überlauf erkannt." << std::endl;
+      }
+
+   double constexpr base = std::numeric_limits<double>::max(); // Maximaler Wert für double
+   double constexpr exponent = 2.0; // Große Potenz
+
+   result = std::pow(base, exponent); // Potenzberechnung
+
+   // Prüfen, ob FE_OVERFLOW ausgelöst wurde
+   if (std::fetestexcept(FE_OVERFLOW)) {
+      out << "Pow FE_OVERFLOW wurde ausgelöst: Überlauf erkannt." << std::endl;
+      }
+   else {
+      out << "Pow FE_OVERFLOW wurde nicht ausgelöst: Kein Überlauf erkannt." << std::endl;
+      }
+
+
+   std::feclearexcept(FE_ALL_EXCEPT);
+
+   result = std::numeric_limits<double>::min(); // Kleiner als der kleinste darstellbare Wert für double
+   result = result / 20000000000000000.0; // Versuch eines Unterlaufs
+
+   // Prüfen, ob FE_UNDERFLOW ausgelöst wurde
+   if (std::fetestexcept(FE_UNDERFLOW)) {
+      out << "FE_UNDERFLOW wurde ausgelöst: Unterlauf erkannt." << std::endl;
+      }
+   else {
+      out << "FE_UNDERFLOW wurde nicht ausgelöst: Kein Unterlauf erkannt." << std::endl;
+      }
+   /*
+   std::feclearexcept(FE_ALL_EXCEPT);
+   out << "pow = " <<  << '\n';
+   if (std::fetestexcept(FE_INEXACT))
+      out << "inexact result reported\n";
+   else
+      out << "inexact result not reported\n";
+   */
+
+   }
 
 
 // --------------------------------------------------------------

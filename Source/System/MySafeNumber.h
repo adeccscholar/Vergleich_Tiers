@@ -1,871 +1,505 @@
 ﻿#pragma once
 
-#if __has_include("MyExceptions.h")
-#include "MyExceptions.h"
+#if __has_include("MyTrace.h")
 #include "MyTrace.h"
-#elif __has_include("adecc_Tools/MyExceptions.h")
-#include "adecc_Tools/MyExceptions.h"
+#elif __has_include("adecc_Tools/MyTrace.h")
 #include "adecc_Tools/MyTrace.h"
 #endif
 
-#include <string_view>
+#if __has_include("Intern/MySafeNumberDefines.h")
+#include "Intern/MySafeNumberDefines.h"
+#include "Intern/MySafeNumberBase.h"
+#elif __has_include("System/Intern/MySafeNumberDefines.h")
+#include "System/Intern/MySafeNumberDefines.h" 
+#include "System/Intern/MySafeNumberBase.h"
+#endif
+
+#include <string>
+#include <typeinfo>
 #include <format>
 #include <source_location>
-#include <chrono>
+#include <type_traits>
 
-template <typename ty>
-concept my_integral_ty = std::is_integral_v<std::remove_cvref_t<ty>> &&
-                         !std::is_same_v<std::remove_cvref_t<ty>, bool>;
+namespace MySafety {
 
-/*
-template <typename ty>
-concept my_integral_ty = std::is_same_v<std::remove_cvref_t<ty>, int>;
-*/
-template <typename ty>
-concept my_number_ty = my_integral_ty<ty>;
-
-template <my_number_ty ty>
-constexpr bool two_s_complement() {
-   if constexpr (!std::is_signed_v<ty>) return false;
-   else if constexpr (std::numeric_limits<ty>::min() < 0 - std::numeric_limits<ty>::max()) return true;
-   else return false;
-   }
-
-template<typename ty>
-inline constexpr bool always_false_safe_number = false;
-
-
-enum class ENumberStatus : uint32_t {
-      ok  = 0,
-      uninitialized,
-      inexact, 
-      underflow,
-      overflow, 
-      divbyzero, 
-      invalid, 
-      range, 
-      unexpected,
-      unknown
+   template <typename ty>
+   concept is_my_safe_number_type = requires {
+      typename ty::value_type;
+      typename ty::class_type;
+      { std::declval<typename ty::value_type>() } -> my_number_ty;
+      { std::declval<const ty>().get_value() } -> std::same_as<std::expected<typename ty::value_type, TValueError<typename ty::value_type>>>;
+      std::is_default_constructible_v<ty>;
+      std::copy_constructible<ty>;
+      std::move_constructible<ty>;
    };
 
-/** Internal enumeration type with the types of checks. This type is used so that runtime decisions
-are avoided in a central checking method */
-enum class EInternChecks : uint32_t {
-     none = 0,
-     add,
-     substract,
-     increment,
-     decrement,
-     unary_minus,
-     multiply,
-     divide,
-     modulo,
-     assign,
-     function,
-     unknown
-   };
+   template <typename ty>
+   concept is_my_safe_number_optional = is_my_safe_number_type<ty> && std::is_base_of_v<NumberBaseOptional, ty>&&
+      requires(ty t) {
+         { t.is_initialized } -> std::same_as<bool>;
+      };
 
-template <>
-struct std::formatter<ENumberStatus> : std::formatter<std::string_view> {
-   template <typename FormatContext>
-   auto format(ENumberStatus t, FormatContext& ctx) {
-      string_view out = "undefined";
-      switch (t) {
-         case ENumberStatus::ok:            out = "ok";            break;
-         case ENumberStatus::uninitialized: out = "uninitialized"; break;
-         case ENumberStatus::inexact:       out = "inexact";       break;
-         case ENumberStatus::underflow:     out = "underflow";     break;
-         case ENumberStatus::overflow:      out = "overflow";      break;
-         case ENumberStatus::divbyzero:     out = "divbyzero";     break;
-         case ENumberStatus::invalid:       out = "invalid";       break;
-         case ENumberStatus::range:         out = "range";         break;
-         case ENumberStatus::unexpected:    out = "unexpected";    break;
-         case ENumberStatus::unknown:       out = "unknown";       break;
+   template <my_number_ty ty = int, uint32_t SAFETY = DefaultSafety>
+   class TNumber final : private NumberBaseOnlyValue<ty>,
+                         private std::conditional_t<has_optional<SAFETY>, NumberBaseOptional,                void>,
+                         private std::conditional_t<has_interval<SAFETY>, NumberBaseInterval<ty>,            void>,
+                         private std::conditional_t<has_status<SAFETY>,   NumberBaseStatus,                  void>,
+                         private std::conditional_t<has_position<SAFETY>, NumberBasePosition<ty, TRACE_LEN>, void> {
+      friend std::ostream& operator << (std::ostream & out, TNumber const& val) { 
+         if constexpr (has_optional<SAFETY>) if(!val.is_initialized) return out << "<empty>"; 
+         if constexpr (has_status<SAFETY>) if (val.status != ENumberStatus::ok) return out << std::format("{} {}", val.value, val.status);         
+         return out << val.value;
          }
-      return formatter<string_view>::format(out, ctx);
-      }
-   };
 
-template <>
-struct std::formatter<EInternChecks> : std::formatter<std::string_view> {
-   template <typename FormatContext>
-   auto format(EInternChecks t, FormatContext& ctx) {
-      string_view out = "undefined";
-      switch (t) {
-         case EInternChecks::none:        out = "none";           break;
-         case EInternChecks::add:         out = "addition";       break;
-         case EInternChecks::substract:   out = "substraction";   break;
-         case EInternChecks::increment:   out = "increment";      break;
-         case EInternChecks::decrement:   out = "decrement";      break;
-         case EInternChecks::unary_minus: out = "unary minus";    break;
-         case EInternChecks::multiply:    out = "multiplication"; break;
-         case EInternChecks::divide:      out = "division";       break;
-         case EInternChecks::modulo:      out = "modulo";         break;
-         case EInternChecks::assign:      out = "assignment";     break;
-         case EInternChecks::function:    out = "function";       break;
-         case EInternChecks::unknown:     out = "unknown";        break;
-         }
-      return formatter<string_view>::format(out, ctx);
-   }
-};
-
-
-enum class ENumberSafety : uint32_t {
-      without            =   0,
-      withOptionalChecks =   1,
-      withTrace          =   2,
-      withException      =   4,
-      withAdditionalData =   8,
-      withIntervalChecks =  16,
-      withRangeChecks    =  32,
-      withOverflowChecks =  64,
-      withStrictTypes    = 128,
-      withDivideByZero   = 256
-   };
-
-template <typename ty>
-concept my_number_safety = std::is_enum_v<ty> && 
-                           std::is_same_v<std::underlying_type_t<ty>, uint32_t> &&
-                           std::is_same_v<ty, ENumberSafety>;
-
-constexpr uint32_t setNumberSafety(my_number_safety auto first) {
-   return static_cast<uint32_t>(first);
-   }
-
-template<my_number_safety... Args>
-constexpr uint32_t combineNumberSafety(ENumberSafety first, Args... rest) {
-   return static_cast<uint32_t>(first) | (... | static_cast<uint32_t>(rest));
-   }
-
-template <uint32_t ControlValue, ENumberSafety Flag>
-constexpr bool IsSafetyFlagSet() {
-   return (ControlValue & static_cast<uint32_t>(Flag)) != 0;
-   }
-
-
-constexpr uint32_t DefaultSafety = combineNumberSafety(ENumberSafety::withException,
-                                                       //ENumberSafety::withOptionalChecks,
-                                                       //ENumberSafety::withAdditionalData,
-                                                       //ENumberSafety::withIntervalChecks,
-                                                       ENumberSafety::withRangeChecks,
-                                                       ENumberSafety::withOverflowChecks,
-                                                       ENumberSafety::withDivideByZero);
-
-
-template <my_number_ty ty> 
-struct NumberBaseOnlyValue {
-   ty value = ty { };
-   };
-
-struct NumberBaseOptional {
-   bool is_initialized;
-   };
-
-struct NumberBaseStatus  {
-   ENumberStatus status = ENumberStatus::ok;
-   };
-
-template <my_number_ty ty>
-struct NumberBaseInterval {
-   ty minimum = ty{ };
-   ty maximum = ty{ };
-   bool value_into(ty const& val) { return val >= minimum && val <= maximum;  }
-   };
-
-
-template <my_number_ty ty = int, uint32_t SAFETY = DefaultSafety>
-class MySafeNumber final : 
-             private NumberBaseOnlyValue<ty>,
-             private std::conditional_t<IsSafetyFlagSet<SAFETY, ENumberSafety::withOptionalChecks>(), NumberBaseOptional, void>,
-             private std::conditional_t<IsSafetyFlagSet<SAFETY, ENumberSafety::withIntervalChecks>(), NumberBaseInterval<ty>, void>,
-             private std::conditional_t<IsSafetyFlagSet<SAFETY, ENumberSafety::withAdditionalData>(), NumberBaseStatus, void> {
-   friend std::ostream& operator << (std::ostream & out, MySafeNumber const& val) { return out << val.Value(); };
-   public:
-      using class_type = MySafeNumber<ty>;
-      using value_type = ty;
+      public:
+         using class_type       = TNumber<ty, SAFETY>;
+         using class_type_param = std::conditional_t<has_position<SAFETY>, TValue<TNumber<ty, SAFETY>, false>, TNumber<ty, SAFETY>>;
+         using value_type       = ty;
+         using value_type_param = std::conditional_t<has_position<SAFETY>, TValue<value_type, false>, value_type>;
       
-      constexpr MySafeNumber() { reset();  }
-      constexpr MySafeNumber(MySafeNumber const& other) { copy(other);  }
-      constexpr MySafeNumber(MySafeNumber&& other) noexcept { swap(other);  }
-      constexpr MySafeNumber(ty const& value) { init(value); }
-      ~MySafeNumber() = default;
-
-      // --------------------------------------------------------------------------------
-      // assignment operators for the class MySafeNumber
-      // --------------------------------------------------------------------------------
-      MySafeNumber& operator = (MySafeNumber const& other) {
-         copy(other);
-         return *this;
-         }
-
-      MySafeNumber& operator = (MySafeNumber&& other) noexcept {
-         swap(other);
-         return *this;
-         }
-
-      MySafeNumber& operator = (ty value) {
-         init(value);
-         return *this;
-         }
-
-      // --------------------------------------------------------------------------------
-      // conversion operators for the class MySafeNumber
-      // --------------------------------------------------------------------------------
-      explicit operator ty& ()& { return Value();  }
-      explicit operator ty const& () const& { return Value(); }
-
-      template <typename = std::enable_if_t<IsSafetyFlagSet<SAFETY, ENumberSafety::withOptionalChecks>()>>
-      operator bool() const { return this->is_initialized; }
-
-   private:
-      ty& Number() { return this->value;  }
-   public:
-      ty const& Value() const { return this->value;  }
-      
-      template <typename = std::enable_if_t<IsSafetyFlagSet<SAFETY, ENumberSafety::withAdditionalData>()>>
-      ENumberStatus const& Status() const { return this->status; }
-      
-      template <typename = std::enable_if_t<IsSafetyFlagSet<SAFETY, ENumberSafety::withIntervalChecks>()>>
-      ty const& Minimum() const { return this->Minimum; }
-
-      template <typename = std::enable_if_t<IsSafetyFlagSet<SAFETY, ENumberSafety::withIntervalChecks>()>>
-      ty const& Maximum() const { return this->Maximum; }
-
-      template <typename = std::enable_if_t<IsSafetyFlagSet<SAFETY, ENumberSafety::withIntervalChecks>()>>
-      bool Interval(ty const& min, ty const& max) {
-         if(min >= max) {
-            if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withException>())
-               throw TMy_StandardError<std::range_error>("value for min isn't lesser then max");
-            return false;
+         template <typename = std::enable_if_t<!has_position<SAFETY>>>
+         constexpr TNumber() { 
+            if constexpr (withTrace<SAFETY>) Trace("standard constructor called");
+            _reset(); 
             }
-         for(auto const& val : { min, max }) {
-            if(val < std::numeric_limits<ty>::min() && val > std::numeric_limits<ty>::max()) {
-               if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withException>())
-                  throw TMy_StandardError<std::range_error>("value for min isn't lesser then max");
-               return false;
+
+         template <typename = std::enable_if_t<has_position<SAFETY>>>
+         constexpr TNumber(src_loc const& loc = src_loc::current(), time_stamp const& now = std::chrono::system_clock::now()) { 
+            if constexpr (withTrace<SAFETY>) Trace(std::format("standard constructor called from {}", MyPostionTimeStamp(loc, now)));
+            if constexpr (has_position<SAFETY>) AddPosition("standard constructor called", loc, now);
+            _reset(); 
+            }
+
+
+         constexpr TNumber(TNumber<ty, SAFETY> const& other) { copy(other); }
+         constexpr TNumber(TNumber<ty, SAFETY>&& other) noexcept { swap(other); }
+
+         template <my_number_ty other_ty> requires has_position<SAFETY>
+         TNumber(other_ty const& value,  
+                          src_loc const& loc = src_loc::current(), time_stamp const& now = std::chrono::system_clock::now()) {
+            if constexpr (has_position<SAFETY>) {
+               AddPosition("constructor called", loc, now);
+               AddPosition("constructor with value of my_number_ty and position- informations", 
+                           src_loc::current(), std::chrono::system_clock::now());
+               }
+            safe_init<other_ty>(value, EInternChecks::construct);
+            }
+
+         template <my_number_ty other_ty> requires !has_position<SAFETY>
+         TNumber(other_ty const& value) {
+            if constexpr (has_position<SAFETY>) {
+               AddPosition("constructor with val of type my_number_ty", src_loc::current(), std::chrono::system_clock::now());
+               }
+            safe_init<other_ty>(value, EInternChecks::construct);
+            }
+
+         template <my_number_ty other_ty>
+         TNumber(other_ty const& value, bool boInitialized, ENumberStatus eStatus) : TNumber() {
+            if constexpr (has_position<SAFETY>) {
+               AddPosition("constructor with val of type my_number_ty and addition", src_loc::current(), std::chrono::system_clock::now());
+               }
+            if(safe_init<other_ty>(value)) {
+               if constexpr (has_optional<SAFETY>) this->is_initialized = boInitialized;
+               if constexpr (has_status<SAFETY>)   this->status = eStatus;
                }
             }
-         return true; 
-         }
 
-
-      void Value(ty const& newVal) { this->value = newVal; }
-      template <typename = std::enable_if_t<IsSafetyFlagSet<SAFETY, ENumberSafety::withAdditionalData>()>>
-      void Status(ENumberStatus const& newVal) { this->status = newVal;  }
-
-      // -------------------------------------------------------------------------------------------
-      // comparsion operators for the class MySafeNumber
-      // -------------------------------------------------------------------------------------------
-      auto operator <=> (MySafeNumber const& other) const noexcept {
-         return Value() <=> other.Value();
-         }
-
-      auto operator == (MySafeNumber const& other) const noexcept { return operator <=> (other) == 0; }
-      auto operator != (MySafeNumber const& other) const noexcept { return operator <=> (other) != 0; }
-      auto operator <  (MySafeNumber const& other) const noexcept { return operator <=> (other) <  0; }
-      auto operator <= (MySafeNumber const& other) const noexcept { return operator <=> (other) <= 0; }
-      auto operator >  (MySafeNumber const& other) const noexcept { return operator <=> (other) >  0; }
-      auto operator >= (MySafeNumber const& other) const noexcept { return operator <=> (other) >= 0; }
-
-      MySafeNumber& operator ++() {
-         if constexpr (SAFETY > 0) Safe<EInternChecks::increment>();
-         else ++Number();
-         return *this;
-         }
-
-      MySafeNumber operator ++(int) {
-         MySafeNumber result(*this);
-         if constexpr (SAFETY > 0) {
-            Safe<EInternChecks::increment>();
-            }
-         else ++Number();
-         return result; // eventuell Status übertragen, Design entscheidung
-         }
-
-      MySafeNumber& operator --() {
-         if constexpr (SAFETY > 0) Safe<EInternChecks::decrement>();
-         else --Number();
-         return *this;
-         }
-
-      MySafeNumber operator --(int) {
-         MySafeNumber result(*this);
-         if constexpr (SAFETY > 0) {
-            Safe<EInternChecks::decrement>();
-            }
-         else --Number();
-         return result; // eventuell Status übertragen, Design entscheidung
-      }
-
-      // 2er Komplement prüfen
-      MySafeNumber operator - () const  {
-         if constexpr (SAFETY > 0) {
-            MySafeNumber result(*this);
-            result.Safe<EInternChecks::unary_minus>();
-            return result;
-            }
-         else return MySafeNumber(-Value());
-         }
-
-
-      MySafeNumber& operator += (MySafeNumber const& other) {
-         if constexpr (SAFETY > 0) Safe<EInternChecks::add>(other);
-         else Number() += other.Value();
-         return *this;
-         }
-
-      MySafeNumber& operator += (int value) {
-         if constexpr (SAFETY > 0) {
-            MySafeNumber other(value);
-            Safe<EInternChecks::add>(other);
-            }
-         else Number() += value;
-         return *this;
-         }
-
-      [[nodiscard]] MySafeNumber operator + (MySafeNumber const& other) const {
-         MySafeNumber result(*this);
-         if constexpr (SAFETY > 0) {
-            result.Safe<EInternChecks::add>(other);
-            }
-         else result.Number() += other.Value();
-         return result;
-         }
-
-      [[nodiscard]] MySafeNumber operator + (ty value) const {
-         MySafeNumber result(*this);
-         if constexpr (SAFETY > 0) {
-            MySafeNumber other(value);
-            result.Safe<EInternChecks::add>(other);
-            }
-         else result.Number() += value;
-         return result;
-         }
-
-      friend [[nodiscard]] MySafeNumber operator + (ty value, MySafeNumber const& other) {
-         MySafeNumber result(value);
-         if constexpr (SAFETY > 0) {
-            result.Safe<EInternChecks::add>(other);
-            }
-         else result.Number() += other.Value();
-         return result;
-         }
-
-      MySafeNumber& operator -= (MySafeNumber const& other) {
-         if constexpr (SAFETY > 0) Safe<EInternChecks::substract>(other);
-         else Number() -= other.Value();
-         return *this;
-         }
-
-      MySafeNumber& operator -= (ty value) {
-         if constexpr (SAFETY > 0) {
-            MySafeNumber other(value);
-            Safe<EInternChecks::substract>(other);
-            }
-         else Number() -= value;
-         return *this;
-         }
-
-      [[nodiscard]] MySafeNumber operator - (MySafeNumber const& other) const {
-         MySafeNumber result(*this);
-         if constexpr (SAFETY > 0) result.Safe<EInternChecks::substract>(other); 
-         else result.Number() += other.Value();
-         return result;
-         }
-
-      [[nodiscard]] MySafeNumber operator - (ty value) const {
-         MySafeNumber result(*this);
-         if constexpr (SAFETY > 0) result.Safe<EInternChecks::substract>(MySafeNumber(value) );
-         else result.Number() -= value;
-         return result;
-         }
-
-      friend [[nodiscard]] MySafeNumber operator - (ty value, MySafeNumber const& other) {
-         MySafeNumber result(value);
-         if constexpr (SAFETY > 0) {
-            result.Safe<EInternChecks::substract>(other);
-            }
-         else result.Number() -= other.Value();
-         return result;
-         }
-
-      MySafeNumber& operator *= (MySafeNumber const& other) {
-         if constexpr (SAFETY > 0) Safe<EInternChecks::multiply>(other);
-         else Number() *= other.Value();
-         return *this;
-         }
-
-      MySafeNumber& operator *= (ty value) {
-         if constexpr (SAFETY > 0) {
-            MySafeNumber other(value);
-            Safe<EInternChecks::multiply>(other);
-            }
-         else Number() *= value;
-         return *this;
-         }
-
-      [[nodiscard]] MySafeNumber operator * (MySafeNumber const& other) const {
-         MySafeNumber result(*this);
-         if constexpr (SAFETY > 0) {
-            result.Safe<EInternChecks::multiply>(other);
-            }
-         else result.Number() *= other.Value();
-         return result;
-         }
-
-      [[nodiscard]] MySafeNumber operator * (ty value) const {
-         MySafeNumber result(*this);
-         if constexpr (SAFETY > 0) {
-            MySafeNumber other(value);
-            result.Safe<EInternChecks::multiply>(other);
-            }
-         else result.Number() *= value;
-         return result;
-         }
-
-      friend [[nodiscard]] MySafeNumber operator * (ty value, MySafeNumber const& other) {
-         MySafeNumber result(value);
-         if constexpr (SAFETY > 0) {
-            result.Safe<EInternChecks::multiply>(other);
-            }
-         else result.Number() *= other.Value();
-         return result;
-         }
-
-      MySafeNumber& operator /= (MySafeNumber const& other) {
-         if constexpr (SAFETY > 0) Safe<EInternChecks::divide>(other);
-         else Number() /= other.Value();
-         return *this;
-         }
-
-      MySafeNumber& operator /= (ty value) {
-         if constexpr (SAFETY > 0) {
-            MySafeNumber other(value);
-            Safe<EInternChecks::divide>(other);
-            }
-         else Number() /= value;
-         return *this;
-         }
-
-      [[nodiscard]] MySafeNumber operator / (MySafeNumber const& other) const {
-         MySafeNumber result(*this);
-         if constexpr (SAFETY > 0) {
-            result.Safe<EInternChecks::divide>(other);
-            }
-         else result.Number() /= other.Value();
-         return result;
-         }
-
-      [[nodiscard]] MySafeNumber operator / (ty value) const {
-         MySafeNumber result(*this);
-         if constexpr (SAFETY > 0) {
-            MySafeNumber other(value);
-            result.Safe<EInternChecks::divide>(other);
-            }
-         else result.Number() /= value;
-         return result;
-         }
-
-      friend [[nodiscard]] MySafeNumber operator / (ty value, MySafeNumber const& other) {
-         MySafeNumber result(value);
-         if constexpr (SAFETY > 0) {
-            result.Safe<EInternChecks::divide>(other);
-            }
-         else result.Number() /= other.Value();
-         return result;
-         }
-
-      MySafeNumber& operator %= (MySafeNumber const& other) {
-         if constexpr (SAFETY > 0) Safe<EInternChecks::modulo>(other);
-         else Number() %= other.Value();
-         return *this;
-         }
-
-      MySafeNumber& operator %= (ty value) {
-         if constexpr (SAFETY > 0) {
-            MySafeNumber other(value);
-            Safe<EInternChecks::modulo>(other);
-            }
-         else Number() %= value;
-         return *this;
-         }
-
-      [[nodiscard]] MySafeNumber operator % (MySafeNumber const& other) const {
-         MySafeNumber result(*this);
-         if constexpr (SAFETY > 0) {
-            result.Safe<EInternChecks::modulo>(other);
-            }
-         else result.Number() %= other.Value();
-         return result;
-         }
-
-      [[nodiscard]] MySafeNumber operator % (ty value) const {
-         MySafeNumber result(*this);
-         if constexpr (SAFETY > 0) {
-            MySafeNumber other(value);
-            result.Safe<EInternChecks::modulo>(other);
-            }
-         else result.Number() %= value;
-         return result;
-         }
-
-      friend [[nodiscard]] MySafeNumber operator % (ty value, MySafeNumber const& other) {
-         MySafeNumber result(value);
-         if constexpr (SAFETY > 0) {
-            result.Safe<EInternChecks::modulo>(other);
-            }
-         else result.Number() %= other.Value();
-         return result;
-         }
-
-
-      [[nodiscard]] bool is_even(void) const {
-         if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withOptionalChecks>()) {
-            if (!CheckOpional(EInternChecks::function, std::source_location::current(), std::chrono::system_clock::now())) return false;
-            }
-         return Number() % 2 == 0;
-         } 
-
-      [[nodiscard]] bool is_odd(void) const {
-         if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withOptionalChecks>()) {
-            if (!CheckOpional(EInternChecks::function, std::source_location::current(), std::chrono::system_clock::now())) return false;
-            }
-         return !is_even();
-         }
-
-      [[nodiscard]] bool is_negative(void) const {
-         if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withOptionalChecks>()) {
-            if (!CheckOpional(EInternChecks::function, std::source_location::current(), std::chrono::system_clock::now())) return false;
-            }
-         return Value() < 0;
-         }
-
-      [[nodiscard]] MySafeNumber abs(void) const {
-         if (is_negative()) return -(*this);
-         else  return *this; 
-         }
-
-      [[nodiscard]] MySafeNumber pow(MySafeNumber const& exponent) {
-         if (exponent.is_negative()) throw std::range_error("pow with negative exponent");
-         if (Value() == 0) [[unlikely]] return MySafeNumber(0);
-         else if (exponent == MySafeNumber(0)) return MySafeNumber(1);
-         else [[likely]] {
-            MySafeNumber result(*this);
-            for (MySafeNumber i = 1; i < exponent; i++) {
-               result *= (*this);
+         // param_number_or_value_type_as_number  other_ty_param_ty
+         template <param_has_number_value_type other_ty>
+         TNumber(other_ty const& value) {
+            if constexpr (has_position<SAFETY>) {
+               if constexpr (param_has_position<other_ty>) AddPosition("constructor called", value.loc(), value.now());
+               AddPosition("constructor with param has value_type of my_number", src_loc::current(), std::chrono::system_clock::now());
                }
-            return result;
+            safe_init<other_ty>(value);
             }
-         }
 
-      template <typename = std::enable_if_t<IsSafetyFlagSet<SAFETY, ENumberSafety::withIntervalChecks>()>>
-      bool is_value_into(void) const { return this->value_into(Value());  }
+          ~TNumber() = default;
 
-      // ------------------------------------------------------------
-      constexpr void reset(void) {
-         Value(ty { } );
-         if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withOptionalChecks>())
-            this->is_initialized = false;
-         if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withAdditionalData>())
-            this->status = ENumberStatus::ok;
-         if constexpr (SAFETY != 0 && !IsSafetyFlagSet<SAFETY, ENumberSafety::withException>() &&
-                                      !IsSafetyFlagSet<SAFETY, ENumberSafety::withTrace>() &&
-                                      !IsSafetyFlagSet<SAFETY, ENumberSafety::withAdditionalData>()) {
-            static_assert(always_false_safe_number<ty>, "unhandled variable (SafeNumber)");
-            }
-         }
+          // --------------------------------------------------------------------------------
+          // assignment operators for the class TNumber
+          // --------------------------------------------------------------------------------
+          TNumber& operator = (TNumber const& other) {
+             copy(other);
+             return *this;
+             }
 
-      constexpr void init(ty newVal) {
-         Value(newVal);
-         if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withOptionalChecks>())
-            this->is_initialized = true;
-         if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withAdditionalData>())
-            this->status = ENumberStatus::ok;
-         if constexpr (SAFETY != 0 && !IsSafetyFlagSet<SAFETY, ENumberSafety::withException>() &&
-                                      !IsSafetyFlagSet<SAFETY, ENumberSafety::withTrace>() &&
-                                      !IsSafetyFlagSet<SAFETY, ENumberSafety::withAdditionalData>()) {
-            static_assert(always_false_safe_number<ty>, "unhandled variable (SafeNumber)");
-            }
-         }
+          TNumber& operator = (TNumber&& other) noexcept {
+             swap(other);
+             return *this;
+             }
 
-      constexpr void swap(MySafeNumber& other) noexcept {
-         std::swap(this->value, other.value);
-         if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withOptionalChecks>())
-            std::swap(this->is_initialized, other.is_initialized);
-         if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withAdditionalData>())
-            std::swap(this->status, other.status);
-         }
-
-      constexpr void copy(MySafeNumber const& other) {
-         Value(other.Value());
-         if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withOptionalChecks>())
-            this->is_initialized = other.is_initialized;
-         if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withAdditionalData>())
-            this->status = other.status;
-         }
-
-      // ============================================================================================
-
-      // method for unary operations
-      /*
-      enum class EInternChecks : uint32_t {
-      assign,
-      */
-      template <typename exception_ty> 
-      constexpr void Message(EInternChecks kind, ENumberStatus stat, std::string const& strMessage,
-                             std::source_location const& loc, 
-                             std::chrono::time_point<std::chrono::system_clock> const& now) {
-         if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withAdditionalData>()) {
-            Status(stat);
-            }
-         if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withTrace>()) {
-            Trace<true>(std::format("[{}] - {}: {}", kind, stat, strMessage), std::cerr, loc, now);
-            Trace<true>("called at: ", std::cerr);
-            }
-         if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withException>()) {
-            throw TMy_StandardError<exception_ty>(std::format("{2:}\n[{0:}] - Status {1:}", kind, stat, strMessage), loc, now);
-            }
-         }
-
-      constexpr bool CheckOpional(EInternChecks kind, std::source_location const& loc,
-                                  std::chrono::time_point<std::chrono::system_clock> const& now) {
-         if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withOptionalChecks>()) {
-            if (!this->is_initialized) {
-               Message<std::runtime_error>(kind, ENumberStatus::uninitialized, "MySafeNumber isn't initialized", loc, now);
-               return false;
-               }
-            }
-         return true;
-         }
-
-      template <EInternChecks CheckKind = EInternChecks::none>
-      constexpr void Safe(std::source_location loc = std::source_location::current(),
-                           std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now()) {
-         //----------------------------------------------------------------------------------------
-         if constexpr (CheckKind == EInternChecks::increment) {
-            if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withOptionalChecks>()) {
-               if (!CheckOpional(CheckKind, loc, now)) return;
-               }
-            if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withIntervalChecks>()) {
-               if (Value() < Maximum()) ++Number();
-               else Message<std::range_error>(CheckKind, ENumberStatus::range, "interval error detected in MySafeNumber", loc, now);
-               }
-            else if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withOverflowChecks>()) {
-               if (Value() < std::numeric_limits<ty>::max()) ++Number();
-               else Message<std::overflow_error>(CheckKind, ENumberStatus::overflow, "overflow error detected in MySafeNumber", loc, now);
-               }
-            else ++Number();
-            }
-         //----------------------------------------------------------------------------------------
-         else if constexpr (CheckKind == EInternChecks::decrement) {
-            if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withOptionalChecks>()) {
-               if (!CheckOpional(CheckKind, loc, now)) return;
-               }
-            if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withIntervalChecks>()) {
-               if (Value() > Minimum()) --Number();
-               else Message<std::range_error>(CheckKind, ENumberStatus::range, "interval error detected in MySafeNumber", loc, now);
-               }
-            else if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withOverflowChecks>()) {
-               if (Value() > std::numeric_limits<ty>::min()) --Number();
-               else Message<std::underflow_error>(CheckKind, ENumberStatus::underflow, "underflow error detected in MySafeNumber", loc, now);
-               }
-            else --Number();
-            }
-         //----------------------------------------------------------------------------------------
-         else if constexpr (CheckKind == EInternChecks::unary_minus) {
-            if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withOptionalChecks>()) {
-               if (!CheckOpional(CheckKind, loc, now)) return;
-               }
-            if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withIntervalChecks>()) {
-               if(!this->is_value_into(-Value())) {
-                  Message<std::range_error>(CheckKind, ENumberStatus::range, "interval error detected in MySafeNumber", loc, now);
-                  }
-               }
-            else if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withOverflowChecks>()) {
-               if constexpr (two_s_complement<ty>()) {
-                  if (Value() != std::numeric_limits<ty>::min()) Number() = -Value();
-                  else Message<std::range_error>(CheckKind, ENumberStatus::overflow, "range error in unary -", loc, now);
-                  }
-               else Number() = -Value();
-               }
-            }
-         //----------------------------------------------------------------------------------------
-
-         }
-
-      template <EInternChecks CheckKind = EInternChecks::none>
-      constexpr void Safe(MySafeNumber const& other,
-                          std::source_location loc = std::source_location::current(),
-                          std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now()) {
-         //---------------------------------------------------------------------------------------
-         if constexpr (CheckKind == EInternChecks::add) {
-            if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withOptionalChecks>()) {
-               if (!CheckOpional(CheckKind, loc, now) || !other.CheckOpional(CheckKind, loc, now)) return;
-               }
-            if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withIntervalChecks>()) {
-               if (other.Value() >= 0) [[likely]] {
-                  if (Maximum() - other.Value() >= Value()) [[likely]] Number() += other.Value();
-                  else Message<std::range_error>(CheckKind, ENumberStatus::range, "interval error detected in MySafeNumber", loc, now);
-                  }
-               else {
-                  if (Minimum() - other.Value() <= Value()) [[likely]] Number() += other.Value();
-                  else Message<std::range_error>(CheckKind, ENumberStatus::range, "interval error detected in MySafeNumber", loc, now);
-                  }
-               }
-            else if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withOverflowChecks>()) {
-               if (other.Value() >= 0) [[likely]] {
-                  if (std::numeric_limits<ty>::max() - other.Value() >= Value()) [[likely]] Number() += other.Value();
-                  else Message<std::overflow_error>(CheckKind, ENumberStatus::overflow, "overflow error detected in MySafeNumber", loc, now);
-                  }
-               else {
-                  if (std::numeric_limits<ty>::min() - other.Value() <= Value()) [[likely]] Number() += other.Value();
-                  else Message<std::underflow_error>(CheckKind, ENumberStatus::underflow, "underflow error detected in MySafeNumber", loc, now);
-                  }
-               }
-            else Number() += other.Value();
-            }
-         //---------------------------------------------------------------------------------------
-         else if constexpr (CheckKind == EInternChecks::substract) {
-            if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withOptionalChecks>()) {
-               if (!CheckOpional(CheckKind, loc, now) || !other.CheckOpional(CheckKind, loc, now)) return;
-               }
-            if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withIntervalChecks>()) {
-               if (other.Number() >= 0) {
-                  if (Minimum() - other.Value() <= Value()) [[likely]] Number() -= other.Value();
-                  else Message<std::range_error>(CheckKind, ENumberStatus::range, "interval error detected in MySafeNumber", loc, now);
-                  }
-               else {
-                  if (Maximum() - other.Value() >= Value()) [[likely]] Number() -= other.Value();
-                  else Message<std::range_error>(CheckKind, ENumberStatus::range, "interval error detected in MySafeNumber", loc, now);
-                  }
-               }
-            else if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withOverflowChecks>()) {
-               if (other.Number() >= 0) {
-                  if (std::numeric_limits<ty>::min() - other.Value() <= Value()) [[likely]] Number() -= other.Value();
-                  else Message<std::overflow_error>(CheckKind, ENumberStatus::overflow, "overflow error detected in MySafeNumber", loc, now);
-                  }
-               else {
-                  if (std::numeric_limits<ty>::max() - other.Value() >= Value()) [[likely]] Number() -= other.Value();
-                  else Message<std::underflow_error>(CheckKind, ENumberStatus::underflow, "underflow error detected in MySafeNumber", loc, now);
-                  }
-               }
-            else Number() -= other.Value();
-            }
-         //---------------------------------------------------------------------------------------
-         else if constexpr (CheckKind == EInternChecks::multiply) {
-            if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withOptionalChecks>()) {
-               if (!CheckOpional(CheckKind, loc, now) || !other.CheckOpional(CheckKind, loc, now)) return;
-               }
-            if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withIntervalChecks>()) {
-               if (Value() > 0) {
-                  if (other.Value() > 0) {
-                     if (Value() < Maximum() / other.Value()) [[likely]] Number() *= other.Value();
-                     else Message<std::range_error>(CheckKind, ENumberStatus::range, "interval error detected in MySafeNumber", loc, now);
-                     }
-                  else if (other.Value() < 0) {
-                     if (Value() < Minimum() / other.Value()) [[likely]] Number() *= other.Value();
-                     else Message<std::range_error>(CheckKind, ENumberStatus::range, "interval error detected in MySafeNumber", loc, now);
-                     }
-                  else [[unlikely]] Number() *= other.Value();
-                  }
-               else if (Value() < 0) {
-                  if (other.Value() < 0) {
-                     if (Value() < Maximum() / other.Value()) [[likely]] Number() *= other.Value();
-                     else Message<std::range_error>(CheckKind, ENumberStatus::range, "interval error detected in MySafeNumber", loc, now);
-                     }
-                  else if (other.Value() > 0) {
-                     if (Value() > Minimum() / other.Value()) [[likely]] Number() *= other.Value();
-                     else Message<std::range_error>(CheckKind, ENumberStatus::range, "interval error detected in MySafeNumber", loc, now);
-                     }
-                  else Number() *= other.Value();
-                  }
-               else [[unlikely]]Number() *= other.Value();
-               }
-            else if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withOverflowChecks>()) {
-               if (Value() > 0) {
-                  if (other.Value() > 0) {
-                     if(Value() < std::numeric_limits<ty>::max() / other.Value()) [[likely]] Number() *= other.Value();
-                     else Message<std::overflow_error>(CheckKind, ENumberStatus::overflow, "overflow error detected in MySafeNumber", loc, now);
-                     }
-                  else if (other.Value() < 0) {
-                     if(Value() < std::numeric_limits<ty>::min() / other.Value()) [[likely]] Number() *= other.Value();
-                     else Message<std::underflow_error>(CheckKind, ENumberStatus::underflow, "underflow error detected in MySafeNumber", loc, now);
-                     }
-                  else [[unlikely]] Number() *= other.Value();
-                  }
-               else if (Value() < 0) {
-                  if (other.Value() < 0) {
-                     if(Value() < std::numeric_limits<ty>::max() / other.Value()) [[likely]] Number() *= other.Value();
-                     else Message<std::overflow_error>(CheckKind, ENumberStatus::overflow, "overflow error detected in MySafeNumber", loc, now);
-                     }
-                  else if (other.Value() > 0) {
-                     if(Value() > std::numeric_limits<ty>::min() / other.Value()) [[likely]] Number() *= other.Value();
-                     else Message<std::underflow_error>(CheckKind, ENumberStatus::underflow, "underflow error detected in MySafeNumber", loc, now);
-                     }
-                  else [[unlikely]] Number() *= other.Value();
-                  }
-               else [[unlikely]] Number() *= other.Value();
-               }
-            else Number() *= other.Value();               
-            }
-         //---------------------------------------------------------------------------------------
-
-         else if constexpr (CheckKind == EInternChecks::divide) {
-            if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withOptionalChecks>()) {
-               if (!CheckOpional(CheckKind, loc, now) || !other.CheckOpional(CheckKind, loc, now)) return;
-               }
-            if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withDivideByZero>()) {
-               if (other.Value() != 0) [[likely]] {
-                  if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withIntervalChecks>()) {
-                     ty result = Number() / other.Value();
-                     if(this->is_value_into(result)) Number() = result;
-                     else Message<std::range_error>(CheckKind, ENumberStatus::range, "interval error detected in MySafeNumber", loc, now);
-                     }
-                  else Number() /= other.Value();
-                  }
-               else Message<std::runtime_error>(CheckKind, ENumberStatus::divbyzero, "division by zero in MySafeNumber", loc, now);
-               }
-            else if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withIntervalChecks>()) {
-               ty result = Number() / other.Value();
-               if (this->is_value_into(result)) Number() = result;
-               else Message<std::range_error>(CheckKind, ENumberStatus::range, "interval error detected in MySafeNumber", loc, now);
-               }
-            else Number() /= other.Value();
-            }
-         //---------------------------------------------------------------------------------------
-         else if constexpr (CheckKind == EInternChecks::modulo) {
-            if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withOptionalChecks>()) {
-               if (!CheckOpional(CheckKind, loc, now) || !other.CheckOpional(CheckKind, loc, now)) return;
-               }
-            if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withDivideByZero>()) {
-               if (other.Value() != 0) [[likely]] {
-                  if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withIntervalChecks>()) {
-                     ty result = Number() % other.Value();
-                     if (this->is_value_into(result)) Number() = result;
-                     else Message<std::range_error>(CheckKind, ENumberStatus::range, "interval error detected in MySafeNumber", loc, now);
-                  }
-                  else Number() %= other.Value();
-                  }
-               else Message<std::runtime_error>(CheckKind, ENumberStatus::divbyzero, "division by zero in MySafeNumber", loc, now);
-               }
-            else if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withIntervalChecks>()) {
-               ty result = Number() % other.Value();
-               if (this->is_value_into(result)) Number() = result;
-               else Message<std::range_error>(CheckKind, ENumberStatus::range, "interval error detected in MySafeNumber", loc, now);
-               }
-            else Number() %= other.Value();
-            }
-         //---------------------------------------------------------------------------------------
-         }
+         // template <param_number_or_value_type_as_number other_ty>
+          template <other_ty_param_ty other_ty>
+          TNumber& operator = (other_ty const& value) {
+             if constexpr (has_position<SAFETY>) {
+                if constexpr (param_has_position<other_ty>)AddPosition("assignment operator with value_type called", value.loc(), value.now());
+                AddPosition("assignment operator");
+                }
+             safe_init<other_ty>(value, EInternChecks::assign);
+             return *this;
+             }
          
-   };
+         // -------------------------------------------------------------------------------------------------
+         // relationals operators
+         
 
-   template <my_number_ty ty = int>
-   using SafeWithInterval = MySafeNumber<ty, combineNumberSafety(ENumberSafety::withException
-                                                                 , ENumberSafety::withOptionalChecks
-                                                                 //, ENumberSafety::withAdditionalData
-                                                                 , ENumberSafety::withIntervalChecks
-                                                                 //, ENumberSafety::withRangeChecks
-                                                                 //, ENumberSafety::withOverflowChecks
-                                                                 , ENumberSafety::withDivideByZero
-                                                                 )>;
+
+         // -------------------------------------------------------------------------------------------------
+         // methods for the value
+         //ty const& Value(void) const { return this->value; }
+
+         constexpr std::expected<value_type, TValueError<value_type>> get_value() const { 
+            if constexpr (has_optional<SAFETY>) {
+               if (!this->is_initialized) return std::unexpected(TValueError{ this->value, true, ENumberStatus::uninitialized });
+               }
+            if constexpr (has_status<SAFETY>) {
+               if (this->status != ENumberStatus::ok) return std::unexpected(TValueError{ this->value, false, this->status });
+               }
+            return this->value; 
+            }
+
+
+         template <my_number_ty other_ty> requires has_position<SAFETY>
+         void Value(other_ty const& newVal,
+                    src_loc const& loc = src_loc::current(), time_stamp const& now = std::chrono::system_clock::now()) {
+            if constexpr (withTrace<SAFETY>) {
+               CallTrace(std::format("Value({}) called from", newVal), loc, now);
+               CallTrace(std::format("Value({})", newVal));
+               }
+            if constexpr (has_position<SAFETY>) {
+               AddPosition("set value function called", loc, now);
+               AddPosition("set value function");
+               }
+            safe_init<other_ty>(EInternChecks::convert, newVal);
+            }
+
+         template <my_number_ty other_ty> requires !has_position<SAFETY>
+         void Value(other_ty const& newVal) { 
+            if constexpr (withTrace<SAFETY>) CallTrace(std::format("Value({})", newVal));
+            safe_init<other_ty>(EInternChecks::convert, newVal);
+            }
+
+         // ------------------------------------------------------------------------------------------------
+         // methods for the position
+
+         template <typename = std::enable_if_t<has_interval<SAFETY>>>
+         NumberBaseInterval<ty> const& Interval() const { return static_cast<NumberBaseInterval<ty> const&>(*this); };
+
+         template <typename = std::enable_if_t<has_interval<SAFETY>>>
+         NumberBaseInterval<ty> & Interval() { return static_cast<NumberBaseInterval<ty>&>(*this); };
+
+         template <typename = std::enable_if_t<has_interval<SAFETY>>>
+         bool value_in_interval(ty const& val) { return Interval().value_into(val); }
+
+         template <typename = std::enable_if_t<has_interval<SAFETY>>>
+         bool set_interval(ty const& min, ty const& max) { 
+            return Interval().set_interval_value(min, max); 
+            }
+         
+
+         // ------------------------------------------------------------------------------------------------
+         // methods for the position
+
+         template <typename = std::enable_if_t<has_position<SAFETY>>>
+         myPositions<ty, TRACE_LEN> const& Positions() const { return this->positions(); };
+
+         template <typename = std::enable_if_t<has_position<SAFETY>>>
+         void AddPosition(std::string const& msg, src_loc loc = src_loc::current(), time_stamp now = std::chrono::system_clock::now()) const {
+            std::optional<bool> opt_val;
+            std::optional<ENumberStatus> opt_stat;
+            if constexpr (has_optional<SAFETY>) opt_val = this->is_initialized;
+            else opt_val = std::nullopt;
+            if constexpr (has_status<SAFETY>) opt_stat = this->status;
+            else opt_stat = std::nullopt;
+            this->locations.push(std::make_tuple(msg, this->value, opt_val, opt_stat, loc, now));
+            }
+
+         template <typename = std::enable_if_t<has_position<SAFETY>>>
+         void ClearPosition() {
+            this->positions().clear();
+            }
+
+         template <typename = std::enable_if_t<has_position<SAFETY>>>
+         void WritePosition(std::ostream& out) const {
+            for (uint32_t i = 0; auto & val : this->positions().view()) {
+               out << std::format("{:2d}: {}\n", ++i, val);
+               }
+            }
+
+         // ------------------------------------------------------------------------------------------------
+         // methods for additional status
+         template <typename = std::enable_if_t<has_status<SAFETY>>>
+         void Status(ENumberStatus const& newVal) { this->status = newVal; }
+
+
+         //template <typename = std::enable_if_t<has_status<SAFETY>>>
+         ENumberStatus Status(void) const {
+            if constexpr (has_status<SAFETY>) return this->status;
+            else return ENumberStatus::stateless;
+            }
+
+         // ------------------------------------------------------------------------------------------------
+         // methods for additional optional informations
+         template <typename = std::enable_if_t<has_optional<SAFETY>>>
+         bool Is_Initialized() const { return this->is_initialized; }
+
+         // =============================================================================================
+         /// method to reset the variable
+         [[nodiscard]] constexpr bool is_negative(void) const {
+            if constexpr (has_optional<SAFETY>) {
+               if (!CheckOpional(EInternChecks::function)) return false;
+               }
+            return Value() < 0;
+            }
+
+         // =============================================================================================
+         /// method to reset the variable
+
+         constexpr void _reset(void) {
+            if constexpr (!exist_output_for_safety<SAFETY>) {
+               static_assert(always_false_safe_number<ty>, "unhandled variable (SafeNumber)");
+               }
+            this->value = ty{ };
+            if constexpr (has_optional<SAFETY>) this->is_initialized = false;
+            if constexpr (has_status<SAFETY>)   Status(ENumberStatus::uninitialized);
+            }
+
+         template <typename = std::enable_if_t<!has_position<SAFETY>>>
+         constexpr void reset(void) {
+            _reset();
+            }
+
+         template <typename = std::enable_if_t<has_position<SAFETY>>>
+         constexpr void reset(src_loc const& loc = src_loc::current(), time_stamp const& now = std::chrono::system_clock::now()) {
+            _reset();
+            if constexpr (has_position<SAFETY>) {
+               ClearPosition();
+               AddPosition("reset called", loc, now);
+               }
+            }
+
+         constexpr void swap(TNumber& other) noexcept {
+            std::swap(this->value, other.value);
+            if constexpr (has_interval<SAFETY>)  static_cast<NumberBaseInterval&>(*this).swap(static_cast<NumberBaseInterval&>(other));
+            if constexpr (has_optional<SAFETY>)  std::swap(this->is_initialized, other.is_initialized);
+            if constexpr (has_status<SAFETY>)    std::swap(this->status,         other.status);
+            if constexpr (has_position<SAFETY>)  this->positions().swap(other.positions);
+            }
+
+         constexpr void copy(TNumber const& other) {
+            Value(other.Value());
+            if constexpr (has_interval<SAFETY>)  static_cast<NumberBaseInterval&>(*this).copy(static_cast<NumberBaseInterval&>(other));
+            if constexpr (has_optional<SAFETY>)  this->is_initialized = other.is_initialized;
+            if constexpr (has_status<SAFETY>)    this->status = other.status;
+            if constexpr (has_position<SAFETY>)  this->positions().copy(other.positions());
+            }
+
+
+         // =============================================================================================
+         template <typename = std::enable_if_t<withTrace<SAFETY>>>
+         void CallTrace(std::string const& strMsg, src_loc const& loc = src_loc::current(), 
+                    time_stamp const& now = std::chrono::system_clock::now()) {
+            ENumberStatus status;
+            if constexpr (has_status<SAFETY>) status = this->status;
+            else status = ENumberStatus::stateless;
+            std::string strOpt;
+            if constexpr (has_optional<SAFETY>) strOpt = this->is_initialized ? "(initialized)"s : "uninitialized"s;
+            else strOpt = "(mandatory)"s;
+            Trace<true>(std::format("{2:}, Value<{3:}>  {1:} - Status: {0:}", status, strOpt, strMsg, typeid(ty).name()), std::cerr, loc, now);
+            }
+
+         // --------------------------------------------------------------------------------------------------------------
+         template <typename exception_ty>
+         constexpr void Message(EInternChecks kind, std::string const& strMessage,
+                                src_loc const& loc = src_loc::current(), 
+                                time_stamp const& now = std::chrono::system_clock::now()) const {
+            if constexpr (withException<SAFETY>) {
+               std::ostringstream os;
+               ENumberStatus status;         // local value for this property, self when its not exist in this instance
+               bool          is_initialized; // local value for this property, self when its not exist in this instance
+               if constexpr (has_status<SAFETY>) status = this->status;
+               else status = ENumberStatus::stateless;
+               if constexpr (has_optional<SAFETY>) is_initialized = this->is_initialized;
+               else is_initialized = true;
+               
+               throw TMyNumberError<exception_ty>(strMessage, SAFETY, kind, status, is_initialized, loc, now);
+               }
+            }
+
+         // ---------------------------------------------------------------------------------------------
+         template <typename = std::enable_if_t<!has_position<SAFETY>>>
+         constexpr bool CheckOpional(EInternChecks kind) const {
+            if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withOptionalChecks>()) {
+               if (!this->is_initialized) {
+                  if constexpr (has_status<SAFETY>) this->status = ENumberStatus::uninitialized;
+                  Message<std::runtime_error>(kind, "requested Number isn't initialized");
+                  return false;
+                  }
+               }
+            return true;
+            }
+
+
+         template <typename = std::enable_if_t<has_position<SAFETY>>>
+         constexpr bool CheckOpional(EInternChecks kind, src_loc const& loc, time_stamp const& now) const {
+            if constexpr (IsSafetyFlagSet<SAFETY, ENumberSafety::withOptionalChecks>()) {
+               if (!this->is_initialized) {
+                  if constexpr (has_status<SAFETY>) this->status = ENumberStatus::uninitialized;
+                  AddPosition("Checkoptional called from here", loc, now);
+                  AddPosition("Message from CheckOptional called", src_loc::current(), std::chrono::system_clock::now());
+                  Message<std::runtime_error>(kind, ENumberStatus::uninitialized, "Number isn't initialized");
+                  return false;
+                  }
+               }
+            return true;
+            }
+
+         // ---------------------------------------------------------------------------------------------
+         template <ENumberStatus kind, my_integral_ty other_ty> requires my_integral_ty<ty>
+         bool can_init(EInternChecks check_kind, other_ty const& value_other, NumberBaseInterval<biggest_int_of<other_ty, ty>> const& interval) {
+            if constexpr (std::is_signed_v<other_ty> && std::is_unsigned_v<ty>) {
+               if (value_other < 0) {
+                  if constexpr (has_position<SAFETY>) AddPosition("can't init integral, sign check"s);
+                  this->value = ty{};
+                  if constexpr (has_status<SAFETY>)   this->status = ENumberStatus::sign_error;
+                  if constexpr (has_optional<SAFETY>) this->is_initialized = false;
+                  std::ostringstream os;
+                  os << "error in " << check_kind << ", sign error, negative value " << value_other
+                     << "for the unsigned type \"" << typeid(ty).name() << "\".";
+                  Message<std::runtime_error>(check_kind, os.str());
+                  return false;
+                  }
+               }           
+            if (interval.value_into(static_cast<biggest_int_of<other_ty, ty>>(value_other))) [[likely]] {
+               this->value = static_cast<ty>(value_other);
+               if constexpr (has_status<SAFETY>)   this->status = ENumberStatus::ok;
+               if constexpr (has_optional<SAFETY>) this->is_initialized = true;
+               return true;
+               }
+            else {
+               if constexpr (has_position<SAFETY>) AddPosition("can't init integral, out of range. message method call"s);
+               this->value = ty{};
+               if constexpr (has_status<SAFETY>)   this->status = kind;
+               if constexpr (has_optional<SAFETY>) this->is_initialized = false;
+               std::ostringstream os;
+               os << "error in " << check_kind << " to underlaying datatype \"" << typeid(ty).name() << "\", value = " << value_other;
+
+               if constexpr (kind == ENumberStatus::range) os << " not in limits " << interval << ".";
+               else os << "not in interval " << interval << ".";
+
+               Message<std::runtime_error>(check_kind, os.str());
+               return false;
+               }
+            }
+
+         template <param_number_or_value_type_as_number other_ty>
+         auto get_value_for_number_or_safe_number(EInternChecks check_kind, other_ty const& newVal) -> typename value_type_select<other_ty>::type const& {
+            if constexpr (param_has_number_value_type<other_ty>) {
+               if (auto val = newVal.get_value(); val.has_value()) return val.value();
+               else {
+                  if constexpr (has_optional<SAFETY>) this->is_initialized = !val.error().boEmpty;
+                  if constexpr (has_status<SAFETY>) this->status = val.error().status;
+                  if constexpr (has_position<SAFETY>) AddPosition(std::format("get value with {}{}{}",
+                           val.error().boEmpty ? "with empty value" : "",
+                           val.error().boEmpty && val.error().status != ENumberStatus::ok ? " and " : "",
+                           val.error().status != ENumberStatus::ok ? std::format("Status {}", val.error().status) : ""));
+                  Message<std::runtime_error>(check_kind, "requested value of paramter for operation is undefined");
+                  return val.error().value;
+                  }
+               }
+            else return newVal;
+            };
+
+
+
+
+         template <param_number_or_value_type_as_number other_ty>
+         auto safe_compare(other_ty const& compVal) {
+            if constexpr (!exist_output_for_safety<SAFETY>) {
+               static_assert(always_false_safe_number<ty>, "unhandled variable (SafeNumber)");
+               }
+
+            TNumber<ty, SAFETY> otherVal;
+            safe_init<other_ty>(compVal, EInternChecks::compare);
+
+
+
+            return;
+            }
+
+         template <param_number_or_value_type_as_number other_ty>
+         bool safe_init(other_ty const& newVal, EInternChecks check_kind) {
+            if constexpr (!exist_output_for_safety<SAFETY>) {
+               static_assert(always_false_safe_number<ty>, "unhandled variable (SafeNumber)");
+               }
+
+            
+            using value_type = typename value_type_select<other_ty>::type;
+            
+            if constexpr (has_position<SAFETY>) AddPosition("init function");
+       
+            if constexpr (!std::is_same_v<ty, value_type> && withStrictTypes<SAFETY>) {
+               if constexpr (has_status<SAFETY>) this->status = ENumberStatus::strict;
+               if constexpr (has_optional<SAFETY>) this->is_initialized = false;
+               if constexpr (has_position<SAFETY>) AddPosition("init function detect sign error, message method call at");
+               std::ostringstream os;
+               os << "strict datatypes error in " << check_kind << " to underlaying datatype \"" << typeid(ty).name() 
+                  << "\", type of paramter is \"" << typeid(value_type).name() << "\" , value = " << newVal << ".";
+               Message<std::runtime_error>(check_kind, os.str());
+               return false;
+               }
+            else { 
+               auto value_other = get_value_for_number_or_safe_number(check_kind, newVal);
+               if constexpr (std::is_same_v<ty, value_type>) {
+                  this->value = value_other;
+                  if constexpr (has_status<SAFETY>) this->status = ENumberStatus::ok;
+                  if constexpr (has_optional<SAFETY>) this->is_initialized = true;
+                  return true;
+                  }
+               else {
+                  if constexpr (std::is_integral_v<value_type> && std::is_integral_v<ty>) { 
+                     if constexpr (withIntervallChecks<SAFETY> || withRangeChecks<SAFETY>) { 
+                        biggest_int_of<ty, value_type> min, max;
+                        if constexpr (withIntervallChecks<SAFETY>) {
+                           if constexpr (std::is_unsigned_v<value_type> && std::is_signed<ty>) {
+                              min = (this->minimum() < 0) ? ty(0) : this->minimum();
+                              max = (this->maximum() < 0) ? ty(0) : this->maximum();
+                              if(max <= min) {
+                                 if constexpr (has_position<SAFETY>) AddPosition("init function detect interval error, message method call at");
+                                 Message<std::runtime_error>(check_kind,
+                                            std::format("interval error through unsigned \"{}\" and signed {}.\nInterval {}",
+                                            typeid(value_type).name(), typeid(ty).name(), Interval()));
+                                 return false;
+                                 }
+                              }
+                           else {
+                              min = this->minimum();
+                              max = this->maximum();
+                              }
+                           return can_init<ENumberStatus::interval_error>(check_kind, value_other, { min, max } );
+                           }
+                        else if constexpr (withRangeChecks<SAFETY>) {
+                           min = std::is_unsigned_v<value_type> ? ty (0) : std::numeric_limits<ty>::min();
+                           max = std::numeric_limits<ty>::max();
+                           return can_init<ENumberStatus::range>(check_kind, value_other, { min, max });
+                           } 
+                        }
+                     else {
+                        this->value = static_cast<ty>(value_other);
+                        if constexpr (has_status<SAFETY>)   this->status = ENumberStatus::ok;
+                        if constexpr (has_optional<SAFETY>) this->is_initialized = true;
+                        return true;
+                        }
+                     }
+                  }
+               }
+            }
+      };
+
+
+                                                          
+
+}  // end of namespace MySafety
+
+

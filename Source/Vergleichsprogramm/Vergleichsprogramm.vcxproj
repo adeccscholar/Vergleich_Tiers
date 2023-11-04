@@ -160,6 +160,9 @@
     <ClInclude Include="..\Processes\Reader_Overview_Db.h" />
     <ClInclude Include="..\Processes\Reader_Process.h" />
     <ClInclude Include="..\Processes\Reader_System_Db.h" />
+    <ClInclude Include="..\System\Intern\MyCircularBuffer.h" />
+    <ClInclude Include="..\System\Intern\MySafeNumberBase.h" />
+    <ClInclude Include="..\System\Intern\MySafeNumberDefines.h" />
     <ClInclude Include="..\System\MyAngle.h" />
     <ClInclude Include="..\System\MyCheck.h" />
     <ClInclude Include="..\System\MyDistance.h" />
@@ -168,6 +171,7 @@
     <ClInclude Include="..\System\MyPoint.h" />
     <ClInclude Include="..\System\MySafeNumber.h" />
     <ClInclude Include="..\System\MySafeVector.h" />
+    <ClInclude Include="..\System\Test\MyTestSuite.h" />
     <ClInclude Include="..\System\Test\Test4System.h" />
     <ClInclude Include="Presenter_Process_Impl_Qt.h" />
     <ClInclude Include="Process_Impl_Qt.h" />

@@ -56,7 +56,10 @@ void MainForm::Test() {
    try {
       //Test4ProcessInstantiation(std::cerr, TMyForm(this, false));
       //Test4SafeVector(std::cerr);
+      //Test4Path(std::cerr);
+      //Test4Positions(std::cerr);
       Test4Numbers(std::cerr);
+      //Test4FPE(std::cerr);
       //Test4Distance(std::cerr);
       //Test4Angle(std::cerr);
       //Test4Point(std::cerr);

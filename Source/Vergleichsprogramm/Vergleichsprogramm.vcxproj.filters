@@ -264,6 +264,18 @@
     <ClInclude Include="..\System\MySafeVector.h">
       <Filter>System\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\System\Intern\MySafeNumberBase.h">
+      <Filter>System\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\System\Intern\MySafeNumberDefines.h">
+      <Filter>System\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\System\Intern\MyCircularBuffer.h">
+      <Filter>System\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\System\Test\MyTestSuite.h">
+      <Filter>System\Test</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="UserDlg.h">

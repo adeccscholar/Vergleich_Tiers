@@ -93,6 +93,10 @@ namespace MySafety {
             safe_init<other_ty>(value, EInternChecks::construct);
             }
 
+         TNumber(int const& value) {
+              this->value = value_other;
+         }
+
          template <my_number_ty other_ty>
          TNumber(other_ty const& value, bool boInitialized, ENumberStatus eStatus) : TNumber() {
             if constexpr (has_position<SAFETY>) {

@@ -233,55 +233,95 @@ namespace MySafety {
          virtual std::string FullMessage() const = 0;
       };
 
-   
-class TNumberExceptionInformation : public TMyExceptionInformation {
+template <my_number_ty ty>
+class TNumberExceptionInformation : public TNumberError_Base, public TMyExceptionInformation {
+protected:
+   using used_number_ty = ty;
 private:
-   uint32_t       iSafety;
-   EInternChecks eCheck_kind;
-   ENumberStatus eStatus;
-   bool          boInitialized;
+   ty                          value;        ///< value of SafeNumber type
+   uint32_t                    iSafety;
+   EInternChecks               eCheck_kind;
+   ENumberStatus               eStatus;
+   bool                        boInitialized;
+
+   myPositions<used_number_ty> positions;
 public:
-   TNumberExceptionInformation(uint32_t pSafety, EInternChecks pCheck_kind, ENumberStatus pStatus, bool pInitialized,
-                        src_loc const& loc = src_loc::current(), time_stamp const& timept = std::chrono::system_clock::now())
-      : TMyExceptionInformation(loc, timept), iSafety(pSafety), eCheck_kind(pCheck_kind), eStatus(pStatus), boInitialized(pInitialized) { }
+   TNumberExceptionInformation(used_number_ty pValue, uint32_t pSafety, EInternChecks pCheck_kind, ENumberStatus pStatus, 
+                               bool pInitialized, myPositions<used_number_ty> pPositions = {},
+                               src_loc const& loc = src_loc::current(), time_stamp const& timept = std::chrono::system_clock::now())
+      : TMyExceptionInformation(loc, timept), value(pValue), iSafety(pSafety), eCheck_kind(pCheck_kind), eStatus(pStatus), 
+                                         boInitialized(pInitialized), positions(pPositions) { }
 
    TNumberExceptionInformation(TNumberExceptionInformation const& other) { copy(other); }
 
    virtual ~TNumberExceptionInformation() = default;
 
-   uint32_t      Safety() const { return iSafety; }
-   EInternChecks Check_kind() const { return eCheck_kind; }
-   ENumberStatus Status() const { return eStatus; }
-   bool          Initialized() const { return boInitialized; }
+   used_number_ty  Value() const { return value;  }
+   uint32_t        Safety() const { return iSafety; }
+   EInternChecks   Check_kind() const { return eCheck_kind; }
+   ENumberStatus   Status() const { return eStatus; }
+   bool            Initialized() const { return boInitialized; }
 
-   virtual std::string NumberStatus() const {
-      return std::format("Error detected during {}\nStatus = {}, value {}",
-              Check_kind(), Status(), (Initialized() ? "is initialized" : "isn't initialized"));
+   myPositions<used_number_ty> const& Positions() const { return positions; }
+
+   virtual std::string NumberStatus() const override {
+      return std::format("Error detected during {}\nValue[{}] = {}\nStatus = {}, value {}",
+              Check_kind(), typeid(used_number_ty).name(), Value(), Status(), (Initialized() ? "is initialized" : "isn't initialized"));
+      }
+
+
+   virtual std::string PositionsText() const override {
+      std::ostringstream os;
+      for(uint32_t i = 0; auto const& val : Positions().view()) {
+         os << std::format("\n{:2d}: {}", ++i, val);
+         }
+      return os.str();
+      }
+
+   //virtual std::string ShortMessage() const
+   virtual std::string FullMessage() const {
+      std::ostringstream os;
+      os << ShortMessage() << std::endl
+         << NumberStatus();
+      if(!Positions().empty()) {
+         os << std::endl;
+         os << PositionsText();
+         }
+      os << std::endl << TimePosition();
+      return os.str();
       }
 
 
    void copy(TNumberExceptionInformation const& other) {
       static_cast<TMyExceptionInformation&>(*this).copy(static_cast<TMyExceptionInformation const&>(other));
+      value          = other.value;
       iSafety        = other.iSafety;
       eCheck_kind    = other.eCheck_kind;
       eStatus        = other.eStatus;
       boInitialized  = other.boInitialized;
+      positions.copy(other.positions);
       }
 };
 
-template <MyWrappedException exception_ty>
-class TMyNumberError : public exception_ty, public TNumberExceptionInformation {
+template <my_number_ty number_ty, MyWrappedException exception_ty>
+class TMyNumberError : public exception_ty, public TNumberExceptionInformation<number_ty> {
 private:
    using used_exception_type = exception_ty;
-   using base_type           = TNumberExceptionInformation;
+   using base_type           = TNumberExceptionInformation<number_ty>;
    mutable std::string strMessage; ///< Hilfsvariable für die Rückgabe von what
 public:
-   TMyNumberError(std::string const& strMsg, uint32_t pSafety, EInternChecks pCheck_kind, ENumberStatus pStatus, bool pInitialized,
-      src_loc const& loc = src_loc::current(), time_stamp const& timept = std::chrono::system_clock::now())
-      : exception_ty(strMsg), TNumberExceptionInformation(pSafety, pCheck_kind, pStatus, pInitialized, loc, timept) { }
+   TMyNumberError(std::string const& strMsg, number_ty pValue, uint32_t pSafety, EInternChecks pCheck_kind, 
+                  ENumberStatus pStatus, bool pInitialized, myPositions<number_ty> pPositions = {},
+                  src_loc const& loc = src_loc::current(), time_stamp const& timept = std::chrono::system_clock::now())
+      : exception_ty(strMsg), 
+        TNumberExceptionInformation<number_ty>(pValue, pSafety, pCheck_kind, pStatus, pInitialized, pPositions, loc, timept) { }
 
-   TMyNumberError(TMyNumberError const& other) : exception_ty(other), TNumberExceptionInformation(other) { }
+   TMyNumberError(TMyNumberError const& other) : exception_ty(other), TNumberExceptionInformation<number_ty>(other) { }
    virtual ~TMyNumberError() = default;
+
+   virtual std::string ShortMessage() const override {
+      return what();
+      }
 
    const char* what() const noexcept override {
       std::ostringstream os;

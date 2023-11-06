@@ -59,8 +59,7 @@ class TestSuite {
              catch(exception_ty const& ex) {
                 out << " - exception of type <" << typeid(exception_ty).name() << "> catched, test successfull" << std::endl << std::endl;
                 try {
-                   out << ex.what() << std::endl;
-                   out << dynamic_cast<MySafety::TNumberExceptionInformation const&>(ex).NumberStatus();
+                   out << dynamic_cast<MySafety::TNumberError_Base const&>(ex).FullMessage();
                    }
                 catch(std::bad_cast const& ex_cast) {
                    out << ex.what();

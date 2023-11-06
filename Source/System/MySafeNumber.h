@@ -323,7 +323,10 @@ namespace MySafety {
                if constexpr (has_optional<SAFETY>) is_initialized = this->is_initialized;
                else is_initialized = true;
                
-               throw TMyNumberError<exception_ty>(strMessage, SAFETY, kind, status, is_initialized, loc, now);
+               if constexpr (has_position<SAFETY>)
+                  throw TMyNumberError<value_type, exception_ty>(strMessage, this->value, SAFETY, kind, status, is_initialized, this->locations, loc, now);
+               else
+                  throw TMyNumberError<value_type, exception_ty>(strMessage, this->value, SAFETY, kind, status, is_initialized, {}, loc, now);
                }
             }
 

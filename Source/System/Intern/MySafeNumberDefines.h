@@ -119,13 +119,9 @@ concept has_optional = IsSafetyFlagSet<ControlValue, ENumberSafety::withOptional
 
 template <uint32_t ControlValue>
 concept has_interval = IsSafetyFlagSet<ControlValue, ENumberSafety::withIntervalChecks>();
-/*
-template <uint32_t ControlValue>
-concept has_location = IsSafetyFlagSet<ControlValue, ENumberSafety::withPosition>();
-*/
+
 template <uint32_t ControlValue>
 concept has_position = IsSafetyFlagSet<ControlValue, ENumberSafety::withPosition>();
-
 
 template <uint32_t ControlValue>
 concept withTrace = IsSafetyFlagSet<ControlValue, ENumberSafety::withTrace>();
@@ -142,6 +138,12 @@ concept withRangeChecks = IsSafetyFlagSet<ControlValue, ENumberSafety::withRange
 template <uint32_t ControlValue>
 concept withIntervallChecks = IsSafetyFlagSet<ControlValue, ENumberSafety::withIntervalChecks>();
 
+template <uint32_t SAFETY>
+concept is_optional_or_has_status = has_optional<SAFETY> || has_status<SAFETY>;
+
+template <uint32_t SAFETY, uint32_t SAFETY_OTHER>
+concept are_optional_or_have_status = is_optional_or_has_status<SAFETY> || is_optional_or_has_status<SAFETY_OTHER>;
+
 
 constexpr uint32_t DefaultSafety = combineNumberSafety(ENumberSafety::withException,
                                                        ENumberSafety::withAdditionalData,
@@ -152,6 +154,13 @@ constexpr uint32_t DefaultSafety = combineNumberSafety(ENumberSafety::withExcept
                                                        //ENumberSafety::withStrictTypes,
                                                        ENumberSafety::withOverflowChecks,
                                                        ENumberSafety::withDivideByZero);
+
+constexpr uint32_t StandardSafety = combineNumberSafety(ENumberSafety::withException,
+                                                        ENumberSafety::withPosition,
+                                                        ENumberSafety::withRangeChecks,
+                                                        ENumberSafety::withOverflowChecks,
+                                                        ENumberSafety::withDivideByZero);
+
 
 } // close namespace to define std::formatter
 

@@ -113,6 +113,90 @@ void Test4Path(std::ostream& out) {
        out << su << "\n";
        });
 
+    
+    tests.Check_fn("test compare with another number type.", [&out] {
+
+       constexpr uint32_t SilentSafety = MySafety::combineNumberSafety(MySafety::ENumberSafety::withAdditionalData,
+                                                                       MySafety::ENumberSafety::withRangeChecks,
+                                                                       MySafety::ENumberSafety::withOverflowChecks,
+                                                                       MySafety::ENumberSafety::withDivideByZero);
+
+       static auto CompFunc = [&out](auto const& val1, auto const& val2) {
+          auto comp = val1 <=> val2;
+          out << "Value 1: " << val1 << " <=> "
+              << "Value 2: " << val2 << " = ";
+
+          if constexpr (std::is_same_v<decltype(comp), std::partial_ordering>) {
+             if(comp == std::partial_ordering::less)            out << "partial less";
+             else if(comp == std::partial_ordering::equivalent) out << "partial equivalent";
+             else if(comp == std::partial_ordering::greater)    out << "partial greater";
+             else if(comp == std::partial_ordering::unordered)  out << "partial unordered";
+             else                                               out << "partial ordering unexpected value";
+             }
+          else if constexpr (std::is_same_v<decltype(comp), std::strong_ordering>) {
+             if (comp == std::strong_ordering::less)            out << "strong less";
+             else if (comp == std::strong_ordering::equal)      out << "strong equal";
+             else if (comp == std::strong_ordering::greater)    out << "strong greater";
+             else                                               out << "strong ordering unexpected value";
+             }
+          else {
+             static_assert(MySafety::always_false_safe_number<decltype(comp)>, "totally error, wrong type for spaceship");
+             }
+          out << "  (" << typeid(comp).name() << ")" << std::endl;
+          return comp;
+          };
+
+       MySafety::TNumber<int>   sn1{ 25 };
+       MySafety::TNumber<short> sn2;
+       MySafety::TNumber<short> sn3 { 40 };
+       MySafety::TNumber<short, SilentSafety> sn4{ std::numeric_limits<long long>::max() };
+       MySafety::TNumber<long long> sn5 { std::numeric_limits<long long>::max() };
+
+       sn2.reset();
+       out << std::endl;
+       CompFunc(sn1, sn2);
+       CompFunc(sn1, sn3);
+       CompFunc(sn1, sn4);
+       CompFunc(sn1, sn5);
+       CompFunc(sn1, 30);
+       CompFunc(sn1, 15);
+       CompFunc(sn1, MySafety::TValue { 25 } );
+
+       });
+
+    tests.Check_fn("test compare with standard number type.", [&out] {
+
+       static auto CompFunc = [&out](auto const& val1, auto const& val2) {
+          auto comp = val1 <=> val2;
+          out << "Value 1: " << val1 << " <=> "
+              << "Value 2: " << val2 << " = ";
+
+          if constexpr (std::is_same_v<decltype(comp), std::partial_ordering>) {
+             if (comp == std::partial_ordering::less)            out << "partial less";
+             else if (comp == std::partial_ordering::equivalent) out << "partial equivalent";
+             else if (comp == std::partial_ordering::greater)    out << "partial greater";
+             else if (comp == std::partial_ordering::unordered)  out << "partial unordered";
+             else                                               out << "partial ordering unexpected value";
+          }
+          else if constexpr (std::is_same_v<decltype(comp), std::strong_ordering>) {
+             if (comp == std::strong_ordering::less)            out << "strong less";
+             else if (comp == std::strong_ordering::equal)      out << "strong equal";
+             else if (comp == std::strong_ordering::greater)    out << "strong greater";
+             else                                               out << "strong ordering unexpected value";
+          }
+          out << "  (" << typeid(comp).name() << ")" << std::endl;
+          return comp;
+          };
+
+       MySafety::TNumber<int, MySafety::StandardSafety>   sn1{ 25 };
+       MySafety::TNumber<short, MySafety::StandardSafety> sn2{ 5  };
+
+       out << std::endl;
+       CompFunc(sn1,sn2);
+       CompFunc(sn1, 30);
+
+
+       });
 
     tests.Check_fn("test assignment with a TValue auf the same type", [&out]() {
                MySafety::TNumber<int> sn{ 25 };
@@ -120,6 +204,13 @@ void Test4Path(std::ostream& out) {
                sn = tttt;
                out << "\nvalue = " << sn << "\n";
                });
+
+
+    tests.Check_fn_exception<std::runtime_error>("test type dedection with guard and assignment with negative value", [&out]() {
+       auto test = MySafety::TNumber { 1u };
+       test = -3;
+       out << "\nvalue = " << test << "\n";
+       });
 
     tests.Check_fn("test empty number", [&out]() {
                MySafety::TNumber<int> e;

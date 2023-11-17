@@ -46,8 +46,12 @@ namespace MySafety {
                          private std::conditional_t<has_status<SAFETY>,   NumberBaseStatus,                  void>,
                          private std::conditional_t<has_position<SAFETY>, NumberBasePosition<ty, TRACE_LEN>, void> {
       friend std::ostream& operator << (std::ostream & out, TNumber const& val) { 
-         if constexpr (has_optional<SAFETY>) if(!val.is_initialized) return out << "<empty>"; 
-         if constexpr (has_status<SAFETY>) if (val.status != ENumberStatus::ok) return out << std::format("{} {}", val.value, val.status);         
+         if constexpr (has_optional<SAFETY>) {
+            if(!val.is_initialized) return out << "<empty>"; 
+            }
+         if constexpr (has_status<SAFETY>) {
+            if (val.status != ENumberStatus::ok) return out << std::format("{} [{}]", val.value, val.status);  
+            }
          return out << val.value;
          }
 
@@ -93,9 +97,6 @@ namespace MySafety {
             safe_init<other_ty>(value, EInternChecks::construct);
             }
 
-         TNumber(int const& value) {
-              this->value = value_other;
-         }
 
          template <my_number_ty other_ty>
          TNumber(other_ty const& value, bool boInitialized, ENumberStatus eStatus) : TNumber() {
@@ -147,6 +148,24 @@ namespace MySafety {
          // -------------------------------------------------------------------------------------------------
          // relationals operators
          
+          template <my_number_ty other_ty, uint32_t other_safety>
+          auto operator <=> (TNumber<other_ty, other_safety> const& other) const {
+             if constexpr (has_position<SAFETY>) AddPosition("Spaceship operator for MySafety::TNumber");
+             return safe_compare(other);
+             }
+
+          template <typename other_ty, bool WITHPOS>
+          auto operator <=> (TValue<other_ty, WITHPOS> const& other) const {
+             if constexpr (has_position<SAFETY>) AddPosition("Spaceship operator for MySafety::TValue");
+             return safe_compare(*other.get_value()); /// @todo review if TValue extented 
+             }
+
+          template <my_number_ty other_ty>
+          auto operator <=> (other_ty const& other) const {
+             if constexpr (has_position<SAFETY>) AddPosition("Spaceship operator for integral");
+             return safe_compare(other);
+          }
+
 
 
          // -------------------------------------------------------------------------------------------------
@@ -245,8 +264,11 @@ namespace MySafety {
 
          // ------------------------------------------------------------------------------------------------
          // methods for additional optional informations
-         template <typename = std::enable_if_t<has_optional<SAFETY>>>
-         bool Is_Initialized() const { return this->is_initialized; }
+         [[nodiscard]] bool Is_Initialized() const {
+            if constexpr (has_optional<SAFETY>) return this->is_initialized;
+            else return true; 
+            }
+
 
          // =============================================================================================
          /// method to reset the variable
@@ -292,7 +314,7 @@ namespace MySafety {
             }
 
          constexpr void copy(TNumber const& other) {
-            Value(other.Value());
+            this->value = other.value;
             if constexpr (has_interval<SAFETY>)  static_cast<NumberBaseInterval&>(*this).copy(static_cast<NumberBaseInterval&>(other));
             if constexpr (has_optional<SAFETY>)  this->is_initialized = other.is_initialized;
             if constexpr (has_status<SAFETY>)    this->status = other.status;
@@ -373,7 +395,7 @@ namespace MySafety {
                   if constexpr (has_optional<SAFETY>) this->is_initialized = false;
                   std::ostringstream os;
                   os << "error in " << check_kind << ", sign error, negative value " << value_other
-                     << "for the unsigned type \"" << typeid(ty).name() << "\".";
+                     << " for the unsigned type \"" << typeid(ty).name() << "\".";
                   Message<std::runtime_error>(check_kind, os.str());
                   return false;
                   }
@@ -419,24 +441,146 @@ namespace MySafety {
             };
 
 
+          template <my_integral_ty ty, my_integral_ty other_ty>
+         static auto safe_integral_compare(ty val, other_ty other) {
+            if constexpr (std::is_signed_v<ty> && !std::is_signed_v<other_ty>) {
+               if (val < 0) return std::strong_ordering::less;
+               }
+            else {
+               if constexpr (!std::is_signed_v<ty> && std::is_signed_v<other_ty>) {
+                  if(other < 0) return std::strong_ordering::greater;
+                  }
+               }
+
+            if constexpr ((sizeof(ty) > sizeof(other_ty)) || 
+                          ((sizeof(ty) == sizeof(other_ty)) && !std::is_signed_v<ty> && std::is_signed_v<other_ty>)) {
+               return val <=> static_cast<ty>(other);
+               }
+            else if constexpr ((sizeof(ty) < sizeof(other_ty)) ||
+                               ((sizeof(ty) == sizeof(other_ty)) && std::is_signed_v<ty> && !std::is_signed_v<other_ty>)) {
+               return static_cast<other_ty>(val) <=> other;
+               }
+            else {
+               return val <=> other;
+               }
+            }
 
 
          template <param_number_or_value_type_as_number other_ty>
-         auto safe_compare(other_ty const& compVal) {
+         auto safe_compare(other_ty const& compVal) const {
             if constexpr (!exist_output_for_safety<SAFETY>) {
                static_assert(always_false_safe_number<ty>, "unhandled variable (SafeNumber)");
                }
 
-            TNumber<ty, SAFETY> otherVal;
-            safe_init<other_ty>(compVal, EInternChecks::compare);
+            if constexpr (withStrictTypes<SAFETY> && !std::is_same_v<ty, other_ty>) {
+               static_assert(always_false_safe_number<ty>, "strict types error in function safe_compare (SafeNumber), can't compared with another type");
+               }
 
+            if constexpr (!is_optional_or_has_status<SAFETY>) {
+               if constexpr (std::is_integral_v<ty> && std::is_integral_v<other_ty>) {
+                  return safe_integral_compare(this->value, compVal);
+                  }
+               else {
+                  static_assert(always_false_safe_number<ty>, "not supported types for safe_compare (SafeNumber), can't compared non integral types");
+                  }
+               }
+            else {
+               static constexpr auto IsValid = [](ENumberStatus const stat) {
+                  return stat == ENumberStatus::ok || stat == ENumberStatus::stateless;
+                  };
 
+               if (!Is_Initialized()) return std::partial_ordering::equivalent;
+               else {
+                  if (IsValid(Status())) {
+                     if constexpr (std::is_integral_v<ty> && std::is_integral_v<other_ty>) {
+                        return static_cast<std::partial_ordering>(safe_integral_compare(this->value, compVal));
+                        }
+                     else {
+                        static_assert(always_false_safe_number<ty>, "not supported types for safe_compare (SafeNumber), can't compared non integral types");
+                        }
 
-            return;
+                     }
+                  else return std::partial_ordering::unordered; // baustelle
+                  }
+               }
             }
 
+         template <my_number_ty other_ty, uint32_t other_safety>
+         auto safe_compare(TNumber<other_ty, other_safety> const& other) const {
+            if constexpr (!exist_output_for_safety<SAFETY>) {
+               static_assert(always_false_safe_number<ty>, "unhandled variable in function safe_compare (SafeNumber)");
+               }
+
+            if constexpr ((withStrictTypes<SAFETY> || withStrictTypes<other_safety>) && !std::is_same_v<ty, other_ty>) {
+               static_assert(always_false_safe_number<ty>, "strict types error in function safe_compare (SafeNumber), can't compared with another type");
+               }
+
+            if constexpr (!are_optional_or_have_status<SAFETY, other_safety>) {
+               if constexpr (std::is_integral_v<ty> && std::is_integral_v<other_ty>) {
+                  if (auto val = other.get_value(); val.has_value()) {
+                     return safe_integral_compare(this->value, *val);
+                     }
+                  else {
+                     // big trouble because complete unexpected
+                     exit(-1);
+                     }
+                  }
+               else {
+                  static_assert(always_false_safe_number<ty>, "not supported types for safe_compare (SafeNumber), can't compared non integral types");
+                  }
+               } 
+            else {
+               static constexpr auto IsValid = [](ENumberStatus const stat) {
+                  return stat == ENumberStatus::ok || stat == ENumberStatus::stateless;
+                  };
+
+               if(Is_Initialized() != other.Is_Initialized()) return std::partial_ordering::unordered;
+               else {
+                  if (!Is_Initialized()) return std::partial_ordering::equivalent;
+                  else {
+                     if(IsValid(Status()) && IsValid(other.Status())) {
+                        if constexpr (std::is_integral_v<ty> && std::is_integral_v<other_ty>) {
+                           if(auto val = other.get_value();val.has_value())
+                              return static_cast<std::partial_ordering>(safe_integral_compare(this->value, *val));
+                           else {
+                              // message unexpected
+                              return std::partial_ordering::unordered;
+                              }
+                           }
+                        else {
+                           static_assert(always_false_safe_number<ty>, "not supported types for safe_compare (SafeNumber), can't compared non integral types");
+                           }
+                        }
+                     else return std::partial_ordering::unordered;
+                     }
+                  }
+               }
+         }
+
+
+
+         /** @brief method to initialize object of type TNumber with a constant or variable and perform safety checks
+         *
+         * This method safely initializes the object with the provided new value while conducting
+         * internal checks The method is templated with the parameter of a internal type my_number_ty or a paramter
+         * with a type value type of the type my_number_ty, allowing flexibility in the type of `newVal`.
+         *
+         * @param newVal The new value to initialize the object with.
+         * @param check_kind The orgin from where the initialization called.
+         *
+         * @return `true` if the initialization is successful and passes the specified checks,
+         *         `false` otherwise.
+         *
+         * @tparam other_ty The type of `newVal`, which can be a number or a type with a value type as number.
+         *
+         * @note The `check_kind` parameter specifies the origin from where the internal checks called,
+         *       and the initialization process may fail if the checks are not satisfied.
+         *       Make sure to handle the return value accordingly to handle initialization failures.
+         *
+         * @see EInternChecks
+         */
          template <param_number_or_value_type_as_number other_ty>
-         bool safe_init(other_ty const& newVal, EInternChecks check_kind) {
+         constexpr bool safe_init(other_ty const& newVal, EInternChecks check_kind) {
             if constexpr (!exist_output_for_safety<SAFETY>) {
                static_assert(always_false_safe_number<ty>, "unhandled variable (SafeNumber)");
                }
@@ -505,7 +649,8 @@ namespace MySafety {
       };
 
 
-                                                          
+template <typename ty>
+TNumber(ty const&) -> TNumber<ty, DefaultSafety>;
 
 }  // end of namespace MySafety
 

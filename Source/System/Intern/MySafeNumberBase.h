@@ -46,6 +46,7 @@ namespace MySafety {
    template <typename ty, bool WITHPOS>
    class TValue : private std::conditional_t<WITHPOS == true, myPositions<ty>, void> {
       ty value;
+      //bool boEmpty;
       src_loc    current_location;
       time_stamp current_time_stamp;
 

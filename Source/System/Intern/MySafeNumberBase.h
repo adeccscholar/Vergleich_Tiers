@@ -117,6 +117,7 @@ namespace MySafety {
       { std::declval<const ty>().get_value() } -> std::same_as<std::expected<typename ty::value_type, TValueError<typename ty::value_type>>>;
       };
 
+
    template <typename ty>
    concept param_has_position = requires(const ty t) {
       typename ty::value_type;
@@ -155,6 +156,7 @@ namespace MySafety {
       ty value = ty{ };
       };
 
+
    struct NumberBaseOptional {
       bool is_initialized;
       };
@@ -181,6 +183,22 @@ namespace MySafety {
    struct NumberBaseStatus {
       mutable ENumberStatus status = ENumberStatus::ok;
       };
+
+
+   template <typename ty>
+   concept param_is_my_safe_number = std::is_base_of_v<NumberBaseOnlyValue<typename ty::value_type>, ty> && requires {
+      typename ty::value_type;
+      { std::declval<typename ty::value_type>() } -> my_number_ty;
+      { std::declval<const ty>().get_value() } -> std::same_as<std::expected<typename ty::value_type, TValueError<typename ty::value_type>>>;
+      { std::declval<const ty>().Status() } -> std::same_as<ENumberStatus>;
+      { std::declval<const ty>().Is_Initialized() } -> std::same_as<bool>;
+      };
+
+   template <typename ty>
+   concept param_is_my_safe_number_with_optional = param_is_my_safe_number<ty> && std::is_base_of_v<NumberBaseOptional, ty>;
+
+   template <typename ty>
+   concept param_is_my_safe_number_with_status   = param_is_my_safe_number<ty> && std::is_base_of_v<NumberBaseStatus, ty>;
 
    template <my_number_ty ty>
    class NumberBaseInterval {

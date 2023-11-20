@@ -161,6 +161,11 @@ constexpr uint32_t StandardSafety = combineNumberSafety(ENumberSafety::withExcep
                                                         ENumberSafety::withOverflowChecks,
                                                         ENumberSafety::withDivideByZero);
 
+constexpr uint32_t SilentSafety   = combineNumberSafety(ENumberSafety::withAdditionalData,
+                                                        ENumberSafety::withRangeChecks,
+                                                        ENumberSafety::withOverflowChecks,
+                                                        ENumberSafety::withDivideByZero);
+
 
 } // close namespace to define std::formatter
 

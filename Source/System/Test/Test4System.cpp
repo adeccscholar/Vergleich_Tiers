@@ -116,60 +116,140 @@ void Test4Path(std::ostream& out) {
     
     tests.Check_fn("test compare with another number type.", [&out] {
 
-       constexpr uint32_t SilentSafety = MySafety::combineNumberSafety(MySafety::ENumberSafety::withAdditionalData,
-                                                                       MySafety::ENumberSafety::withRangeChecks,
-                                                                       MySafety::ENumberSafety::withOverflowChecks,
-                                                                       MySafety::ENumberSafety::withDivideByZero);
+    size_t iCnt = 0, iErr = 0;
+    static auto CompFunc = [&out, &iCnt, &iErr](auto const& val1, auto const& val2, auto result) {
+       auto comp = val1 <=> val2;
+       ++iCnt;
+       out << "Value 1 of type " << typeid(decltype(val1)).name() << ": " << val1 << " <=> "
+          << "Value 2 of type " << typeid(decltype(val2)).name() << ": " << val2 << " = ";
 
-       static auto CompFunc = [&out](auto const& val1, auto const& val2) {
-          auto comp = val1 <=> val2;
-          out << "Value 1: " << val1 << " <=> "
-              << "Value 2: " << val2 << " = ";
-
-          if constexpr (std::is_same_v<decltype(comp), std::partial_ordering>) {
-             if(comp == std::partial_ordering::less)            out << "partial less";
-             else if(comp == std::partial_ordering::equivalent) out << "partial equivalent";
-             else if(comp == std::partial_ordering::greater)    out << "partial greater";
-             else if(comp == std::partial_ordering::unordered)  out << "partial unordered";
-             else                                               out << "partial ordering unexpected value";
-             }
-          else if constexpr (std::is_same_v<decltype(comp), std::strong_ordering>) {
-             if (comp == std::strong_ordering::less)            out << "strong less";
-             else if (comp == std::strong_ordering::equal)      out << "strong equal";
-             else if (comp == std::strong_ordering::greater)    out << "strong greater";
-             else                                               out << "strong ordering unexpected value";
-             }
-          else {
-             static_assert(MySafety::always_false_safe_number<decltype(comp)>, "totally error, wrong type for spaceship");
-             }
-          out << "  (" << typeid(comp).name() << ")" << std::endl;
-          return comp;
-          };
+       if constexpr (std::is_same_v<decltype(comp), std::partial_ordering>) {
+          if (comp == std::partial_ordering::less)            out << "partial less";
+          else if (comp == std::partial_ordering::equivalent) out << "partial equivalent";
+          else if (comp == std::partial_ordering::greater)    out << "partial greater";
+          else if (comp == std::partial_ordering::unordered)  out << "partial unordered";
+          else                                               out << "partial ordering unexpected value";
+          }
+       else if constexpr (std::is_same_v<decltype(comp), std::strong_ordering>) {
+          if (comp == std::strong_ordering::less)            out << "strong less";
+          else if (comp == std::strong_ordering::equal)      out << "strong equal";
+          else if (comp == std::strong_ordering::greater)    out << "strong greater";
+          else                                               out << "strong ordering unexpected value";
+          }
+       out << "  (" << typeid(comp).name() << "). The Result is " << (comp == result ? "correct." : "wrong.") << std::endl;
+       if (comp != result) ++iErr;
+       return comp == result;
+       };
 
        MySafety::TNumber<int>   sn1{ 25 };
        MySafety::TNumber<short> sn2;
        MySafety::TNumber<short> sn3 { 40 };
-       MySafety::TNumber<short, SilentSafety> sn4{ std::numeric_limits<long long>::max() };
+       MySafety::TNumber<short, MySafety::SilentSafety> sn4{ std::numeric_limits<long long>::max() };
        MySafety::TNumber<long long> sn5 { std::numeric_limits<long long>::max() };
 
+       MySafety::TNumber<long long> sn6;
+       sn6 = sn1;
        sn2.reset();
        out << std::endl;
-       CompFunc(sn1, sn2);
-       CompFunc(sn1, sn3);
-       CompFunc(sn1, sn4);
-       CompFunc(sn1, sn5);
-       CompFunc(sn1, 30);
-       CompFunc(sn1, 15);
-       CompFunc(sn1, MySafety::TValue { 25 } );
+       CompFunc(sn1, sn2, std::partial_ordering::unordered);
+       CompFunc(sn1, sn3, std::partial_ordering::less);
+       CompFunc(sn1, sn4, std::partial_ordering::unordered);
+       CompFunc(sn1, sn5, std::partial_ordering::less);
+       CompFunc(sn1, sn6, std::partial_ordering::equivalent);
+       CompFunc(sn1, 30,  std::partial_ordering::less);
+       CompFunc(sn1, 15,  std::partial_ordering::greater);
+       CompFunc(sn1, MySafety::TValue { 25 }, std::partial_ordering::equivalent);
+       CompFunc(sn1, MySafety::TValue{ std::numeric_limits<unsigned int>::max() }, std::partial_ordering::less);
+       CompFunc(sn1, MySafety::TValue{ std::numeric_limits<long long>::max() }, std::partial_ordering::less);
+
+       if (iErr > 0) {
+          std::ostringstream os;
+          os << iCnt << " tests to compare TNumber finished with " << iErr << " errors\n";
+          throw TMy_RuntimeError(os.str());
+          }
+       
+       });
+
+    tests.Check_fn("test relational operators with standard number type.", [&out] {
+       static std::array<std::string, 6> strOps = { "=="s, "!="s, "< "s, "<="s, "> "s, ">="s };
+       size_t iCnt = 0, iErr = 0;
+       static auto CompFunc = [&out, &iCnt, &iErr](auto const& val1, auto const& val2, std::array<bool, 6> results) {
+          bool test_result;
+          for(size_t i = 0; auto result : results) {
+             ++iCnt;
+             out << val1 << " " << strOps[i] << " " << val2;
+             switch(i) {
+                case 0: test_result = val1 == val2; break;
+                case 1: test_result = val1 != val2; break;
+                case 2: test_result = val1 <  val2; break;
+                case 3: test_result = val1 <= val2; break;
+                case 4: test_result = val1 >  val2; break;
+                case 5: test_result = val1 >= val2; break;
+                default: throw TMy_RuntimeError("unexpected problem inside of the test for relational operators");
+                }
+             out << " The Result is " << (test_result ? "true" : "false") 
+                 << ", expected was " << (result ? "true" : "false") << ". Test is ";
+             if(test_result == result) {
+                out << "successful.";
+                }
+             else {
+                out << "failed.";
+                ++iErr;
+                }
+             out << std::endl;
+             ++i;
+             }
+          return iErr;
+          };
+
+
+       MySafety::TNumber<int>          sn1 { 25 };
+       MySafety::TNumber<unsigned int> sn2 { 25 };
+       MySafety::TNumber<long long>    sn3 { 26 };
+       MySafety::TNumber<int>          sn4 {  0 };
+       MySafety::TNumber<int>          sn5, sn6;
+       MySafety::TNumber<int, MySafety::SilentSafety> sn7 { std::numeric_limits<long long>::min() };
+       MySafety::TNumber<int, MySafety::SilentSafety> sn8 { std::numeric_limits<long long>::max() };
+
+       MySafety::TNumber<int,            MySafety::StandardSafety> ssn1{ 25 };
+       MySafety::TNumber<short,          MySafety::StandardSafety> ssn2{ 5 };
+       MySafety::TNumber<unsigned short, MySafety::StandardSafety> ssn3{ 25 };
+       MySafety::TNumber<long long,      MySafety::StandardSafety> ssn4{ std::numeric_limits<long long>::max() };
+       MySafety::TNumber<int,            MySafety::StandardSafety> ssn5{  };
+       //MySafety::TNumber<int,            MySafety::StandardSafety> ssn6{ std::numeric_limits<long long>::max() };
+
+       out << "\ncompare with partial_ordering:\n";
+       CompFunc(sn1, sn2, { true,  false, false, true,  false, true  });
+       CompFunc(sn1, sn3, { false, true,  true,  true,  false, false });
+       CompFunc(sn1, sn4, { false, true,  false, false, true,  true  });
+       CompFunc(sn1, sn5, { false, true,  false, false, false, false });
+       CompFunc(sn5, sn6, { true,  false, false, true,  false, true  });
+       CompFunc(sn1, sn7, { false, true,  false, false, false, false });
+       CompFunc(sn5, sn7, { false, true,  false, false, false, false });
+       CompFunc(sn7, sn8, { false, true,  false, false, false, false });
+       out << "\ncompare with strong_ordering:\n";
+       CompFunc(ssn1, ssn2, { false, true,  false, false, true,  true  });
+       CompFunc(ssn1, ssn3, { true,  false, false, true,  false, true  });
+       CompFunc(ssn1, ssn4, { false, true,  true,  true,  false, false });
+       CompFunc(ssn1, ssn5, { false, true,  false, false, true,  true  });
+       //CompFunc(ssn1, ssn6, { false, true,  false, false, true,  true  });
+
+
+       if (iErr > 0) {
+          std::ostringstream os;
+          os << iCnt << " tests to compare TNumber finished with " << iErr << " errors\n";
+          throw TMy_RuntimeError(os.str());
+          }
 
        });
 
     tests.Check_fn("test compare with standard number type.", [&out] {
-
-       static auto CompFunc = [&out](auto const& val1, auto const& val2) {
+       size_t iCnt = 0, iErr = 0;
+       static auto CompFunc = [&out, &iCnt, &iErr](auto const& val1, auto const& val2, auto result) {
           auto comp = val1 <=> val2;
-          out << "Value 1: " << val1 << " <=> "
-              << "Value 2: " << val2 << " = ";
+          ++iCnt;
+          out << "Value 1 of type " << typeid(decltype(val1)).name() << ": " << val1 << " <=> "
+              << "Value 2 of type " << typeid(decltype(val2)).name() << ": " << val2 << " = ";
 
           if constexpr (std::is_same_v<decltype(comp), std::partial_ordering>) {
              if (comp == std::partial_ordering::less)            out << "partial less";
@@ -184,17 +264,46 @@ void Test4Path(std::ostream& out) {
              else if (comp == std::strong_ordering::greater)    out << "strong greater";
              else                                               out << "strong ordering unexpected value";
           }
-          out << "  (" << typeid(comp).name() << ")" << std::endl;
-          return comp;
+          out << "  (" << typeid(comp).name() << "). The Result is " << (comp == result ? "correct." : "wrong.") << std::endl;
+          if (comp != result) ++iErr;
+          return comp == result;
           };
+
 
        MySafety::TNumber<int, MySafety::StandardSafety>   sn1{ 25 };
        MySafety::TNumber<short, MySafety::StandardSafety> sn2{ 5  };
 
-       out << std::endl;
-       CompFunc(sn1,sn2);
-       CompFunc(sn1, 30);
+       MySafety::TNumber<unsigned short, MySafety::StandardSafety> sn3{ 5 };
+       MySafety::TNumber<long long, MySafety::StandardSafety> sn4{ std::numeric_limits<long long>::min() };
 
+       out << std::endl;
+       /*
+       using std::tie;
+       using std::make_tuple;
+
+       tie(iCnt,iErr) = CompFunc(sn1,sn2, std::strong_ordering::greater)  ? make_tuple(++iCnt,iErr) : make_tuple(++iCnt,++iErr);
+       tie(iCnt,iErr) = CompFunc(sn1, 30, std::strong_ordering::less)     ? make_tuple(++iCnt,iErr) : make_tuple(++iCnt,++iErr);
+
+       tie(iCnt,iErr) = CompFunc(sn3, sn4, std::strong_ordering::greater) ? make_tuple(++iCnt,iErr) : make_tuple(++iCnt,++iErr);
+       sn4 = std::numeric_limits<long long>::max();
+       tie(iCnt,iErr) = CompFunc(sn3, sn4, std::strong_ordering::less)    ? make_tuple(++iCnt,iErr) : make_tuple(++iCnt,++iErr);
+       sn4 = sn3;
+       tie(iCnt,iErr) = CompFunc(sn3, sn4, std::strong_ordering::equal)   ? make_tuple(++iCnt,iErr) : make_tuple(++iCnt,++iErr);
+       */  
+       CompFunc(sn1, sn2, std::strong_ordering::greater);
+       CompFunc(sn1, 30, std::strong_ordering::less);
+
+       CompFunc(sn3, sn4, std::strong_ordering::greater);
+       sn4 = std::numeric_limits<long long>::max();
+       CompFunc(sn3, sn4, std::strong_ordering::less);
+       sn4 = sn3;
+       CompFunc(sn3, sn4, std::strong_ordering::equal);
+
+       if(iErr > 0) {
+          std::ostringstream os;
+          os << iCnt << " tests to compare TNumber finished with " << iErr << " errors\n";
+          throw std::runtime_error(os.str());
+          }
 
        });
 

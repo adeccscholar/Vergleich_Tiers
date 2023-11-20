@@ -60,6 +60,8 @@ namespace MySafety {
          using class_type_param = std::conditional_t<has_position<SAFETY>, TValue<TNumber<ty, SAFETY>, false>, TNumber<ty, SAFETY>>;
          using value_type       = ty;
          using value_type_param = std::conditional_t<has_position<SAFETY>, TValue<value_type, false>, value_type>;
+
+         using NumberBaseOnlyValue<ty>::value;
       
          template <typename = std::enable_if_t<!has_position<SAFETY>>>
          constexpr TNumber() { 
@@ -147,7 +149,13 @@ namespace MySafety {
          
          // -------------------------------------------------------------------------------------------------
          // relationals operators
-         
+          template <param_number_or_value_type_as_number other_ty>
+          auto operator <=> (other_ty const& other) const {
+             if constexpr (has_position<SAFETY>) AddPosition("Spaceship operator for MySafety::TNumber");
+             return safe_compare(other);
+             }
+
+          /*
           template <my_number_ty other_ty, uint32_t other_safety>
           auto operator <=> (TNumber<other_ty, other_safety> const& other) const {
              if constexpr (has_position<SAFETY>) AddPosition("Spaceship operator for MySafety::TNumber");
@@ -164,9 +172,23 @@ namespace MySafety {
           auto operator <=> (other_ty const& other) const {
              if constexpr (has_position<SAFETY>) AddPosition("Spaceship operator for integral");
              return safe_compare(other);
-          }
+             }
+          */
 
-
+          //*
+          template <param_number_or_value_type_as_number other_ty>
+          auto operator == (other_ty const& other) const {
+             if constexpr (has_position<SAFETY>) AddPosition("Equal operator for MySafety::TNumber");
+             return (*this <=> other) == 0;
+             }
+          //*/
+          /*
+          template <param_number_or_value_type_as_number other_ty>
+          auto operator < (other_ty const& other) const {
+             if constexpr (has_position<SAFETY>) AddPosition("Equal operator for MySafety::TNumber");
+             return (*this <=> other) < 0;
+             }
+          */
 
          // -------------------------------------------------------------------------------------------------
          // methods for the value
@@ -350,7 +372,7 @@ namespace MySafety {
                else is_initialized = true;
                
                if constexpr (has_position<SAFETY>)
-                  throw TMyNumberError<value_type, exception_ty>(strMessage, this->value, SAFETY, kind, status, is_initialized, this->locations, loc, now);
+                   throw TMyNumberError<value_type, exception_ty>(strMessage, this->value, SAFETY, kind, status, is_initialized, this->locations, loc, now);
                else
                   throw TMyNumberError<value_type, exception_ty>(strMessage, this->value, SAFETY, kind, status, is_initialized, {}, loc, now);
                }
@@ -441,7 +463,7 @@ namespace MySafety {
             };
 
 
-          template <my_integral_ty ty, my_integral_ty other_ty>
+         template <my_integral_ty ty, my_integral_ty other_ty>
          static auto safe_integral_compare(ty val, other_ty other) {
             if constexpr (std::is_signed_v<ty> && !std::is_signed_v<other_ty>) {
                if (val < 0) return std::strong_ordering::less;
@@ -472,41 +494,97 @@ namespace MySafety {
                static_assert(always_false_safe_number<ty>, "unhandled variable (SafeNumber)");
                }
 
-            if constexpr (withStrictTypes<SAFETY> && !std::is_same_v<ty, other_ty>) {
+            using other_number_ty = value_type_select<other_ty>::type;
+
+            if constexpr (withStrictTypes<SAFETY> && !std::is_same_v<ty, other_number_ty>) {
                static_assert(always_false_safe_number<ty>, "strict types error in function safe_compare (SafeNumber), can't compared with another type");
                }
 
-            if constexpr (!is_optional_or_has_status<SAFETY>) {
-               if constexpr (std::is_integral_v<ty> && std::is_integral_v<other_ty>) {
-                  return safe_integral_compare(this->value, compVal);
-                  }
-               else {
-                  static_assert(always_false_safe_number<ty>, "not supported types for safe_compare (SafeNumber), can't compared non integral types");
-                  }
-               }
-            else {
-               static constexpr auto IsValid = [](ENumberStatus const stat) {
-                  return stat == ENumberStatus::ok || stat == ENumberStatus::stateless;
-                  };
-
-               if (!Is_Initialized()) return std::partial_ordering::equivalent;
-               else {
-                  if (IsValid(Status())) {
-                     if constexpr (std::is_integral_v<ty> && std::is_integral_v<other_ty>) {
-                        return static_cast<std::partial_ordering>(safe_integral_compare(this->value, compVal));
+            // TNumber
+            if constexpr (param_is_my_safe_number<other_ty>) {
+               if constexpr (!is_optional_or_has_status<SAFETY> &&
+                             !param_is_my_safe_number_with_optional<other_ty> &&
+                             !param_is_my_safe_number_with_status<other_ty>) {
+                  if constexpr (std::is_integral_v<ty> && std::is_integral_v<other_number_ty>) {
+                     if(auto val = compVal.get_value(); val.has_value()) {
+                        return safe_integral_compare(this->value, *val);
                         }
                      else {
-                        static_assert(always_false_safe_number<ty>, "not supported types for safe_compare (SafeNumber), can't compared non integral types");
+                        exit(-1); 
                         }
-
                      }
-                  else return std::partial_ordering::unordered; // baustelle
+                  else {
+                     static_assert(always_false_safe_number<ty>, "not supported types for safe_compare (SafeNumber), can't compared non integral types");
+                     }
+                  }
+               // ------- end of part with strong ordering -------------------------------------------
+               else {
+                  static constexpr auto IsValid = [](ENumberStatus const stat) {
+                     return stat == ENumberStatus::ok || stat == ENumberStatus::stateless;
+                     };
+
+                  if (Is_Initialized() != compVal.Is_Initialized()) return std::partial_ordering::unordered;
+                  else {
+                     if (!Is_Initialized()) return std::partial_ordering::equivalent;
+                     else {
+                        if (IsValid(Status()) && IsValid(compVal.Status())) {
+                           if constexpr (std::is_integral_v<ty> && std::is_integral_v<other_number_ty>) {
+                              if (auto val = compVal.get_value(); val.has_value())
+                                 return static_cast<std::partial_ordering>(safe_integral_compare(this->value, *val));
+                              else {
+                                 return std::partial_ordering::unordered; // message unexpected
+                                 }
+                              }
+                           else {
+                              static_assert(always_false_safe_number<ty>, "not supported types for safe_compare (SafeNumber), can't compared non integral types");
+                              }
+                           }
+                        else return std::partial_ordering::unordered;
+                        }
+                     }
+                  }
+               }
+            // here only for values .. need to extended to TValue
+            else {
+               auto getValue = [&compVal]() {
+                  if constexpr (param_has_number_value_type<other_ty>) {
+                     return *compVal.get_value(); // here only TValue, but short hand action
+                     }
+                  else return compVal;
+                  };
+
+               if constexpr (!is_optional_or_has_status<SAFETY>) {
+                  if constexpr (std::is_integral_v<ty> && std::is_integral_v<other_number_ty>) {
+                     return safe_integral_compare(this->value, getValue());
+                     }
+                  else {
+                     static_assert(always_false_safe_number<ty>, "not supported types for safe_compare (SafeNumber), can't compared non integral types");
+                     }
+                  }
+               else {
+                  static constexpr auto IsValid = [](ENumberStatus const stat) {
+                     return stat == ENumberStatus::ok || stat == ENumberStatus::stateless;
+                     };
+
+                  if (!Is_Initialized()) return std::partial_ordering::unordered;
+                  else {
+                     if (IsValid(Status())) {
+                        if constexpr (std::is_integral_v<ty> && std::is_integral_v<other_number_ty>) {
+                           return static_cast<std::partial_ordering>(safe_integral_compare(this->value, getValue()));
+                           }
+                        else {
+                           static_assert(always_false_safe_number<ty>, "not supported types for safe_compare (SafeNumber), can't compared non integral types");
+                           }
+                        }
+                     else return std::partial_ordering::unordered; // baustelle
+                     }
                   }
                }
             }
 
+         /*
          template <my_number_ty other_ty, uint32_t other_safety>
-         auto safe_compare(TNumber<other_ty, other_safety> const& other) const {
+         auto safe_compare_2(TNumber<other_ty, other_safety> const& other) const {
             if constexpr (!exist_output_for_safety<SAFETY>) {
                static_assert(always_false_safe_number<ty>, "unhandled variable in function safe_compare (SafeNumber)");
                }
@@ -514,6 +592,7 @@ namespace MySafety {
             if constexpr ((withStrictTypes<SAFETY> || withStrictTypes<other_safety>) && !std::is_same_v<ty, other_ty>) {
                static_assert(always_false_safe_number<ty>, "strict types error in function safe_compare (SafeNumber), can't compared with another type");
                }
+
 
             if constexpr (!are_optional_or_have_status<SAFETY, other_safety>) {
                if constexpr (std::is_integral_v<ty> && std::is_integral_v<other_ty>) {
@@ -556,7 +635,7 @@ namespace MySafety {
                   }
                }
          }
-
+         */
 
 
          /** @brief method to initialize object of type TNumber with a constant or variable and perform safety checks

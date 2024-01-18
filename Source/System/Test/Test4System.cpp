@@ -307,6 +307,16 @@ void Test4Path(std::ostream& out) {
 
        });
 
+    tests.Check_fn("Test Move to show the copy ", [&out] {
+               int value =  2 ;
+               int const& ref = value;
+
+               int test = std::move(ref);
+               out << "Test:  "  << test << '\n';
+               out << "Value: " << value << '\n';
+
+               });
+
     tests.Check_fn("test assignment with a TValue auf the same type", [&out]() {
                MySafety::TNumber<int> sn{ 25 };
                MySafety::TValue<int, false> tttt(30);
@@ -613,11 +623,12 @@ void Test4Angle(std::ostream& out) {
    MyAngle<double, MyAngleKind::degree> tmp{ 0 };
    std::string w = "13";
    tmp.Angle(w);
+   /*
    out << std::format("Winkel in deg: {:10.2f}\n", tmp.Angle());
    out << std::format("Winkel in rad: {:10.6f}\n", tmp.Angle<MyAngleKind::radian>());
    out << std::format("Winkel in deg: {:10.2f}\n", tmp);
    out << std::format("Winkel in rad: {:10.6f}\n", tmp.convert_to<MyAngleKind::radian>());
-
+   */
    auto test2 = 120.0_deg;
    out << std::setprecision(4);
    for (auto const& number : { 45._deg, 90._deg, 120._deg }) {

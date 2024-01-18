@@ -508,14 +508,6 @@ public:
       ty theDistance;
    };
 
-
-   /*
-   //template <my_param_distance ty = double, MyDistanceKind kind = MyDistanceKind::without>
-   class MyDistance
-   */
-
-
-
 template <my_param_distance ty, MyDistanceKind kind>
 struct std::formatter<MyDistance<ty, kind>> : std::formatter<std::string_view> {
    std::string format_string;
@@ -532,7 +524,7 @@ struct std::formatter<MyDistance<ty, kind>> : std::formatter<std::string_view> {
       return pos; 
       }
       
-   auto format(MyDistance<ty, kind> const& val, std::format_context& ctx) {
+   auto format(MyDistance<ty, kind> const& val, std::format_context& ctx) const {
       std::string temp;  
       if constexpr (kind == MyDistanceKind::without)
          std::vformat_to(std::back_inserter(temp), format_string, std::make_format_args(val.Distance()));
@@ -541,6 +533,7 @@ struct std::formatter<MyDistance<ty, kind>> : std::formatter<std::string_view> {
       return std::formatter<std::string_view>::format(temp, ctx);
       }
    };
+
 
 // ----------------------------------------------------------------------------------
 /**  namespace to isolate the literals for distances 

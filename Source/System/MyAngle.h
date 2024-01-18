@@ -416,7 +416,7 @@ class MyAngle {
    struct std::formatter<MyAngle<ty, kind>> : std::formatter<std::string_view> {
       std::string format_string;
 
-      constexpr auto parse(std::format_parse_context& ctx) {
+      constexpr auto parse(std::format_parse_context const& ctx) {
          auto pos = ctx.begin();
          format_string = "{:";
          while (pos != ctx.end() && *pos != '}') {
@@ -427,7 +427,7 @@ class MyAngle {
          return pos; 
          }
 
-      auto format(MyAngle<ty, kind> const& val, std::format_context& ctx) {
+      auto format(MyAngle<ty, kind> const& val, std::format_context& ctx) const {
          std::string temp;
          std::vformat_to(std::back_inserter(temp), format_string, std::make_format_args(val.Angle(), val.unit()));
          return std::formatter<std::string_view>::format(temp, ctx);

@@ -173,7 +173,7 @@ constexpr uint32_t SilentSafety   = combineNumberSafety(ENumberSafety::withAddit
 template <>
 struct std::formatter<MySafety::ENumberStatus> : std::formatter<std::string_view> {
    template <typename FormatContext>
-   auto format(MySafety::ENumberStatus t, FormatContext& ctx) {
+   auto format(MySafety::ENumberStatus t, FormatContext& ctx) const {
       string_view out = "undefined";
       switch (t) {
          case MySafety::ENumberStatus::ok:             out = "ok";                    break;
@@ -201,7 +201,7 @@ struct std::formatter<MySafety::ENumberStatus> : std::formatter<std::string_view
    template <>
    struct std::formatter<MySafety::EInternChecks> : std::formatter<std::string_view> {
       template <typename FormatContext>
-      auto format(MySafety::EInternChecks t, FormatContext& ctx) {
+      auto format(MySafety::EInternChecks t, FormatContext& ctx) const {
          string_view out = "undefined";
          switch (t) {
          case MySafety::EInternChecks::none:        out = "none";                  break;

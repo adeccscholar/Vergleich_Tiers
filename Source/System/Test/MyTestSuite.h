@@ -14,13 +14,13 @@
 #include <format>
 
 namespace test_space {
-	
+	// R A I I
    class redirect_to_string_stream {
       private:
          std::ostream& oldStream;
          std::streambuf* old_stream_buff;
          std::ostringstream stringStream;
-         bool is_redirected;
+         //bool is_redirected;
       public:
          redirect_to_string_stream(std::ostream& old_out = std::cout) 
                   : oldStream(old_out), old_stream_buff(nullptr) {

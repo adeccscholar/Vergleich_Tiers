@@ -54,7 +54,7 @@ TBusinessOperations const& MainForm::processes() const {
 void MainForm::Test() {
    using namespace test_space;
    try {
-      //Test4ProcessInstantiation(std::cerr, TMyForm(this, false));
+      Test4ProcessInstantiation(std::cerr, TMyForm(this, false));
       //Test4SafeVector(std::cerr);
       //Test4Path(std::cerr);
       //Test4Positions(std::cerr);

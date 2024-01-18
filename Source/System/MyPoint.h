@@ -431,7 +431,7 @@ private:
  template <my_param_distance ty, int SIZE, MyDistanceKind kind>
  struct std::formatter<MyPoint<ty, SIZE, kind>> : std::formatter<std::string_view> {
       std::string format_string;
-            constexpr auto parse(std::format_parse_context& ctx) {
+      constexpr auto parse(std::format_parse_context& ctx) {
          auto pos = ctx.begin();
          format_string = "{:";
          while (pos != ctx.end() && *pos != '}') {
@@ -442,7 +442,7 @@ private:
          return pos; // returns the iterator to the last parsed character in the format string, in this case we just swallow everything
         }
 
-      auto format(MyPoint<ty, SIZE, kind> const& val, std::format_context& ctx) {
+      auto format(MyPoint<ty, SIZE, kind> const& val, std::format_context& ctx) const {
          std::string temp;
          
          std::string fmt = "(" + format_string;

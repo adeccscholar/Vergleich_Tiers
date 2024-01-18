@@ -254,104 +254,105 @@ namespace MySafety {
 
 template <my_number_ty ty>
 class TNumberExceptionInformation : public TNumberError_Base, public TMyExceptionInformation {
-protected:
-   using used_number_ty = ty;
-private:
-   ty                          value;        ///< value of SafeNumber type
-   uint32_t                    iSafety;
-   EInternChecks               eCheck_kind;
-   ENumberStatus               eStatus;
-   bool                        boInitialized;
+   protected:
+      using used_number_ty = ty;
+   private:
+      ty                          value;         ///< value of SafeNumber type
+      uint32_t                    iSafety;
+      EInternChecks               eCheck_kind;
+      ENumberStatus               eStatus;
+      bool                        boInitialized;
 
-   myPositions<used_number_ty> positions;
-public:
-   TNumberExceptionInformation(used_number_ty pValue, uint32_t pSafety, EInternChecks pCheck_kind, ENumberStatus pStatus, 
-                               bool pInitialized, myPositions<used_number_ty> pPositions = {},
-                               src_loc const& loc = src_loc::current(), time_stamp const& timept = std::chrono::system_clock::now())
-      : TMyExceptionInformation(loc, timept), value(pValue), iSafety(pSafety), eCheck_kind(pCheck_kind), eStatus(pStatus), 
-                                         boInitialized(pInitialized), positions(pPositions) { }
+      myPositions<used_number_ty> positions;
+   public:
+      TNumberExceptionInformation(used_number_ty pValue, uint32_t pSafety, EInternChecks pCheck_kind, ENumberStatus pStatus, 
+                                  bool pInitialized, myPositions<used_number_ty> pPositions = {},
+                                  src_loc const& loc = src_loc::current(), 
+                                  time_stamp const& timept = std::chrono::system_clock::now())
+           : TMyExceptionInformation(loc, timept), value(pValue), iSafety(pSafety), eCheck_kind(pCheck_kind), 
+                                     eStatus(pStatus), boInitialized(pInitialized), positions(pPositions) { }
 
-   TNumberExceptionInformation(TNumberExceptionInformation const& other) { copy(other); }
+      TNumberExceptionInformation(TNumberExceptionInformation const& other) { copy(other); }
 
-   virtual ~TNumberExceptionInformation() = default;
+      virtual ~TNumberExceptionInformation() = default;
 
-   used_number_ty  Value() const { return value;  }
-   uint32_t        Safety() const { return iSafety; }
-   EInternChecks   Check_kind() const { return eCheck_kind; }
-   ENumberStatus   Status() const { return eStatus; }
-   bool            Initialized() const { return boInitialized; }
+      used_number_ty  Value() const { return value;  }
+      uint32_t        Safety() const { return iSafety; }
+      EInternChecks   Check_kind() const { return eCheck_kind; }
+      ENumberStatus   Status() const { return eStatus; }
+      bool            Initialized() const { return boInitialized; }
 
-   myPositions<used_number_ty> const& Positions() const { return positions; }
+      myPositions<used_number_ty> const& Positions() const { return positions; }
 
-   virtual std::string NumberStatus() const override {
-      return std::format("Error detected during {}\nValue[{}] = {}\nStatus = {}, value {}",
-              Check_kind(), typeid(used_number_ty).name(), Value(), Status(), (Initialized() ? "is initialized" : "isn't initialized"));
-      }
-
-
-   virtual std::string PositionsText() const override {
-      std::ostringstream os;
-      for(uint32_t i = 0; auto const& val : Positions().view()) {
-         os << std::format("\n{:2d}: {}", ++i, val);
+      virtual std::string NumberStatus() const override {
+         return std::format("Error detected during {}\nValue[{}] = {}\nStatus = {}, value {}",
+                            Check_kind(), typeid(used_number_ty).name(), Value(), Status(), 
+                            (Initialized() ? "is initialized" : "isn't initialized"));
          }
-      return os.str();
-      }
 
-   //virtual std::string ShortMessage() const
-   virtual std::string FullMessage() const {
-      std::ostringstream os;
-      os << ShortMessage() << std::endl
-         << NumberStatus();
-      if(!Positions().empty()) {
-         os << std::endl;
-         os << PositionsText();
+
+      virtual std::string PositionsText() const override {
+         std::ostringstream os;
+         for(uint32_t i = 0; auto const& val : Positions().view()) {
+            os << std::format("\n{:2d}: {}", ++i, val);
+            }
+         return os.str();
          }
-      os << std::endl << TimePosition();
-      return os.str();
-      }
+
+      //virtual std::string ShortMessage() const
+      virtual std::string FullMessage() const {
+         std::ostringstream os;
+         os << ShortMessage() << std::endl
+            << NumberStatus();
+         if(!Positions().empty()) {
+            os << std::endl;
+            os << PositionsText();
+            }
+         os << std::endl << TimePosition();
+         return os.str();
+         }
 
 
-   void copy(TNumberExceptionInformation const& other) {
-      static_cast<TMyExceptionInformation&>(*this).copy(static_cast<TMyExceptionInformation const&>(other));
-      value          = other.value;
-      iSafety        = other.iSafety;
-      eCheck_kind    = other.eCheck_kind;
-      eStatus        = other.eStatus;
-      boInitialized  = other.boInitialized;
-      positions.copy(other.positions);
-      }
-};
+      void copy(TNumberExceptionInformation const& other) {
+         static_cast<TMyExceptionInformation&>(*this).copy(static_cast<TMyExceptionInformation const&>(other));
+         value          = other.value;
+         iSafety        = other.iSafety;
+         eCheck_kind    = other.eCheck_kind;
+         eStatus        = other.eStatus;
+         boInitialized  = other.boInitialized;
+         positions.copy(other.positions);
+         }
+   };
 
 template <my_number_ty number_ty, MyWrappedException exception_ty>
 class TMyNumberError : public exception_ty, public TNumberExceptionInformation<number_ty> {
-private:
-   using used_exception_type = exception_ty;
-   using base_type           = TNumberExceptionInformation<number_ty>;
-   mutable std::string strMessage; ///< Hilfsvariable für die Rückgabe von what
-public:
-   TMyNumberError(std::string const& strMsg, number_ty pValue, uint32_t pSafety, EInternChecks pCheck_kind, 
-                  ENumberStatus pStatus, bool pInitialized, myPositions<number_ty> pPositions = {},
-                  src_loc const& loc = src_loc::current(), time_stamp const& timept = std::chrono::system_clock::now())
-      : exception_ty(strMsg), 
-        TNumberExceptionInformation<number_ty>(pValue, pSafety, pCheck_kind, pStatus, pInitialized, pPositions, loc, timept) { }
+   private:
+      using used_exception_type = exception_ty;
+      using base_type           = TNumberExceptionInformation<number_ty>;
+      mutable std::string strMessage; ///< Hilfsvariable für die Rückgabe von what
+   public:
+      TMyNumberError(std::string const& strMsg, number_ty pValue, uint32_t pSafety, EInternChecks pCheck_kind, 
+                     ENumberStatus pStatus, bool pInitialized, myPositions<number_ty> pPositions = {},
+                     src_loc const& loc = src_loc::current(), time_stamp const& timept = std::chrono::system_clock::now())
+         : exception_ty(strMsg), 
+           TNumberExceptionInformation<number_ty>(pValue, pSafety, pCheck_kind, pStatus, pInitialized, pPositions, loc, timept) { }
 
-   TMyNumberError(TMyNumberError const& other) : exception_ty(other), TNumberExceptionInformation<number_ty>(other) { }
-   virtual ~TMyNumberError() = default;
+      TMyNumberError(TMyNumberError const& other) : exception_ty(other), TNumberExceptionInformation<number_ty>(other) { }
+      virtual ~TMyNumberError() = default;
 
-   virtual std::string ShortMessage() const override {
-      return what();
-      }
+      virtual std::string ShortMessage() const override {
+         return what();
+         }
 
-   const char* what() const noexcept override {
-      std::ostringstream os;
-      os << "exception of type [" << typeid(used_exception_type).name()
-         << "] detected, triggered within MySaftey::TNumber." << std::endl
-         << typename used_exception_type::what();
-      strMessage = os.str();
-      return strMessage.c_str();
-      }
-
-};
+      const char* what() const noexcept override {
+         std::ostringstream os;
+         os << "exception of type [" << typeid(used_exception_type).name()
+            << "] detected, triggered within MySaftey::TNumber." << std::endl
+            << typename used_exception_type::what();
+         strMessage = os.str();
+         return strMessage.c_str();
+         }
+   };
 
 }  // end of namespace MySafety
 
@@ -359,7 +360,7 @@ public:
 template <typename ty>
 struct std::formatter<MySafety::NumberBaseInterval<ty>> : std::formatter<std::string_view> {
    template <typename FormatContext>
-   auto format(MySafety::NumberBaseInterval<ty> t, FormatContext& ctx) {
+   auto format(MySafety::NumberBaseInterval<ty> t, FormatContext& ctx) const {
       auto it = ctx.out();
       std::format_to(it, "({}, {})", t.minimum(), t.maximum());
       return it;
@@ -370,7 +371,7 @@ struct std::formatter<MySafety::NumberBaseInterval<ty>> : std::formatter<std::st
 template <typename ty>
 struct std::formatter<MySafety::myPosition<ty>> : std::formatter<std::string_view> {
    template <typename FormatContext>
-   auto format(MySafety::myPosition<ty> t, FormatContext& ctx) {
+   auto format(MySafety::myPosition<ty> t, FormatContext& ctx) const {
       auto it = ctx.out();
       auto const cz_ts = std::chrono::current_zone()->to_local(std::get<5>(t));
       auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(std::get<5>(t).time_since_epoch()) % 1000;

@@ -12,4 +12,6 @@ class TProcess_Reader_Overview_Impl : virtual public TProcess_Reader_Overview, v
 
       TProcess_Reader_Overview_Impl& operator = (TProcess_Reader_Overview_Impl const&) = delete;
       TProcess_Reader_Overview_Impl& operator = (TProcess_Reader_Overview_Impl&&) noexcept = delete;
+
+      virtual void ReadBerlin_old(void) override;
    };

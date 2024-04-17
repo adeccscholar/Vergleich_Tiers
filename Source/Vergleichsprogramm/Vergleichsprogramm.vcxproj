@@ -111,9 +111,11 @@
   <ItemGroup>
     <ClCompile Include="..\Migration\Migration_Process_Impl.cpp" />
     <ClCompile Include="..\Persistence\Reader_Create_Db_Impl.cpp" />
+    <ClCompile Include="..\Persistence\Reader_Overview_Db_Impl.cpp" />
     <ClCompile Include="..\Persistence\Reader_Process_Impl.cpp" />
     <ClCompile Include="..\Processes\BusinessOperations.cpp" />
     <ClCompile Include="..\System\Test\Test4System.cpp" />
+    <ClCompile Include="OutputDlgClass.cpp" />
     <ClCompile Include="Presenter_Process_Impl_Qt.cpp" />
     <ClCompile Include="Test4Process.cpp" />
     <ClCompile Include="UserDlg.cpp" />
@@ -125,6 +127,7 @@
     <ClCompile Include="MainForm.cpp" />
     <ClCompile Include="main.cpp" />
     <None Include="Vergleichsprogramm.ico" />
+    <QtUic Include="OutputDlgClass.ui" />
     <QtUic Include="UserDlg.ui" />
     <ResourceCompile Include="Vergleichsprogramm.rc" />
   </ItemGroup>
@@ -173,6 +176,7 @@
     <ClInclude Include="..\System\MySafeVector.h" />
     <ClInclude Include="..\System\Test\MyTestSuite.h" />
     <ClInclude Include="..\System\Test\Test4System.h" />
+    <QtMoc Include="OutputDlgClass.h" />
     <ClInclude Include="Presenter_Process_Impl_Qt.h" />
     <ClInclude Include="Process_Impl_Qt.h" />
     <ClInclude Include="Test4Process.h" />

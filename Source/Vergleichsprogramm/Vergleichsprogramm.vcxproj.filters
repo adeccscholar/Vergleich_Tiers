@@ -133,6 +133,12 @@
     <ClCompile Include="..\System\Test\Test4System.cpp">
       <Filter>System\Test</Filter>
     </ClCompile>
+    <ClCompile Include="OutputDlgClass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Persistence\Reader_Overview_Db_Impl.cpp">
+      <Filter>Process - Persistence\Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Presenter_Process_Impl_Qt.h">
@@ -281,9 +287,15 @@
     <QtMoc Include="UserDlg.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <QtMoc Include="OutputDlgClass.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="UserDlg.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="OutputDlgClass.ui">
       <Filter>Form Files</Filter>
     </QtUic>
   </ItemGroup>

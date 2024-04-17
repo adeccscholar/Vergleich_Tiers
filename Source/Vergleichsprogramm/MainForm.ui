@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1178</width>
-    <height>616</height>
+    <width>1186</width>
+    <height>621</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -102,6 +102,13 @@
          </property>
         </spacer>
        </item>
+       <item>
+        <widget class="QPushButton" name="btnClose">
+         <property name="text">
+          <string>btnClose</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
     </item>
@@ -112,7 +119,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1178</width>
+     <width>1186</width>
      <height>22</height>
     </rect>
    </property>
@@ -147,9 +154,19 @@
     </widget>
     <addaction name="menu_Berlin_2"/>
    </widget>
+   <widget class="QMenu" name="menuTest">
+    <property name="title">
+     <string>Test</string>
+    </property>
+    <addaction name="actTestProcesses"/>
+    <addaction name="actTestPath"/>
+    <addaction name="actTestPositions"/>
+    <addaction name="actTestSafeVector"/>
+   </widget>
    <addaction name="menu_File"/>
    <addaction name="menu_Create"/>
    <addaction name="menu_Import"/>
+   <addaction name="menuTest"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -162,8 +179,7 @@
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actLoginDatabase">
    <property name="icon">
-    <iconset theme="document-open">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="document-open"/>
    </property>
    <property name="text">
     <string>&amp;Login</string>
@@ -182,6 +198,26 @@
   <action name="actImportBlnOld">
    <property name="text">
     <string>Berlin (old)</string>
+   </property>
+  </action>
+  <action name="actTestProcesses">
+   <property name="text">
+    <string>Prozesse</string>
+   </property>
+  </action>
+  <action name="actTestPath">
+   <property name="text">
+    <string>Pfadangaben</string>
+   </property>
+  </action>
+  <action name="actTestPositions">
+   <property name="text">
+    <string>Positionen</string>
+   </property>
+  </action>
+  <action name="actTestSafeVector">
+   <property name="text">
+    <string>sicherer Vektor</string>
    </property>
   </action>
  </widget>

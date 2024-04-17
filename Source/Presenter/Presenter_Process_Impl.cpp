@@ -52,7 +52,9 @@ void TProcess_Presenter_Impl::InitMainForm(TMyForm&& form, std::string const& st
       frm.Set<EMyFrameworkType::button, std::string>("btnLogin"s,           "login into database ...");
       frm.Set<EMyFrameworkType::button, std::string>("btnCreateBerlinOld"s, "create structure Berlin (old) ...");
       frm.Set<EMyFrameworkType::button, std::string>("btnImportBln"s,       "migrate data for Berlin (old) ...");
-      frm.Enable<EMyFrameworkType::button>("btnLogin"s, true);
+      frm.Set<EMyFrameworkType::button, std::string>("btnClose"s,           "close ...");
+
+      for(auto const& button : { "btnLogin"s, "btnClose"s} ) frm.Enable<EMyFrameworkType::button>(button, true);
       } 
    catch (std::exception& ex) {
       frm.Message(EMyMessageType::information, "error while prepare application", ex.what());

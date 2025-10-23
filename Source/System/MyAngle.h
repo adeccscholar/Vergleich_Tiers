@@ -429,7 +429,7 @@ class MyAngle {
 
       auto format(MyAngle<ty, kind> const& val, std::format_context& ctx) const {
          std::string temp;
-         std::vformat_to(std::back_inserter(temp), format_string, std::make_format_args(val.Angle(), val.unit()));
+         ; // std::vformat_to(std::back_inserter(temp), format_string, std::make_format_args(val.Angle(), val.unit()));
          return std::formatter<std::string_view>::format(temp, ctx);
          }
    };

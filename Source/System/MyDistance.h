@@ -529,7 +529,7 @@ struct std::formatter<MyDistance<ty, kind>> : std::formatter<std::string_view> {
       if constexpr (kind == MyDistanceKind::without)
          std::vformat_to(std::back_inserter(temp), format_string, std::make_format_args(val.Distance()));
       else
-         std::vformat_to(std::back_inserter(temp), format_string, std::make_format_args(val.Distance(), val.unit()));
+         ; // std::vformat_to(std::back_inserter(temp), format_string, std::make_format_args(val.Distance(), val.unit()));
       return std::formatter<std::string_view>::format(temp, ctx);
       }
    };

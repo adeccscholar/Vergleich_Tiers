@@ -162,6 +162,10 @@
     <addaction name="actTestPath"/>
     <addaction name="actTestPositions"/>
     <addaction name="actTestSafeVector"/>
+    <addaction name="actTestPoints"/>
+    <addaction name="actTestAngle"/>
+    <addaction name="actTestDistance"/>
+    <addaction name="actTestNumbers"/>
    </widget>
    <addaction name="menu_File"/>
    <addaction name="menu_Create"/>
@@ -218,6 +222,26 @@
   <action name="actTestSafeVector">
    <property name="text">
     <string>sicherer Vektor</string>
+   </property>
+  </action>
+  <action name="actTestPoints">
+   <property name="text">
+    <string>Punkte</string>
+   </property>
+  </action>
+  <action name="actTestAngle">
+   <property name="text">
+    <string>Winkel</string>
+   </property>
+  </action>
+  <action name="actTestDistance">
+   <property name="text">
+    <string>Entfernungen</string>
+   </property>
+  </action>
+  <action name="actTestNumbers">
+   <property name="text">
+    <string>Zahlen</string>
    </property>
   </action>
  </widget>

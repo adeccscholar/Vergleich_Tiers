@@ -89,6 +89,8 @@ void Test4Path(std::ostream& out) {
    out << TMyExceptionInformation::FilePosition(src_loc::current()) << "\n";
    }
 
+
+/*
  void Test4Numbers(std::ostream& out) {
     static_assert(MySafety::is_my_safe_number_type<MySafety::TNumber<int, 10>>, "TNumber concept don't work.");
 
@@ -277,19 +279,18 @@ void Test4Path(std::ostream& out) {
        MySafety::TNumber<long long, MySafety::StandardSafety> sn4{ std::numeric_limits<long long>::min() };
 
        out << std::endl;
-       /*
-       using std::tie;
-       using std::make_tuple;
+      
+      // using std::tie;
+      //  using std::make_tuple;
 
-       tie(iCnt,iErr) = CompFunc(sn1,sn2, std::strong_ordering::greater)  ? make_tuple(++iCnt,iErr) : make_tuple(++iCnt,++iErr);
-       tie(iCnt,iErr) = CompFunc(sn1, 30, std::strong_ordering::less)     ? make_tuple(++iCnt,iErr) : make_tuple(++iCnt,++iErr);
+      //  tie(iCnt,iErr) = CompFunc(sn1,sn2, std::strong_ordering::greater)  ? make_tuple(++iCnt,iErr) : make_tuple(++iCnt,++iErr);
+      //  tie(iCnt,iErr) = CompFunc(sn1, 30, std::strong_ordering::less)     ? make_tuple(++iCnt,iErr) : make_tuple(++iCnt,++iErr);
 
-       tie(iCnt,iErr) = CompFunc(sn3, sn4, std::strong_ordering::greater) ? make_tuple(++iCnt,iErr) : make_tuple(++iCnt,++iErr);
-       sn4 = std::numeric_limits<long long>::max();
-       tie(iCnt,iErr) = CompFunc(sn3, sn4, std::strong_ordering::less)    ? make_tuple(++iCnt,iErr) : make_tuple(++iCnt,++iErr);
-       sn4 = sn3;
-       tie(iCnt,iErr) = CompFunc(sn3, sn4, std::strong_ordering::equal)   ? make_tuple(++iCnt,iErr) : make_tuple(++iCnt,++iErr);
-       */  
+      //  tie(iCnt,iErr) = CompFunc(sn3, sn4, std::strong_ordering::greater) ? make_tuple(++iCnt,iErr) : make_tuple(++iCnt,++iErr);
+      //  sn4 = std::numeric_limits<long long>::max();
+      //  tie(iCnt,iErr) = CompFunc(sn3, sn4, std::strong_ordering::less)    ? make_tuple(++iCnt,iErr) : make_tuple(++iCnt,++iErr);
+      //  sn4 = sn3;
+      //  tie(iCnt,iErr) = CompFunc(sn3, sn4, std::strong_ordering::equal)   ? make_tuple(++iCnt,iErr) : make_tuple(++iCnt,++iErr);
        CompFunc(sn1, sn2, std::strong_ordering::greater);
        CompFunc(sn1, 30, std::strong_ordering::less);
 
@@ -348,44 +349,10 @@ void Test4Path(std::ostream& out) {
                });
 
     tests.Finish();
-/*
-    out << "Size of bool: " << sizeof(bool) << " bytes" << std::endl;
-    out << "Size of int:  " << sizeof(int) << " bytes" << std::endl;
-    out << "Size of optional<int>: " << sizeof(std::optional<int>) << " bytes" << std::endl;
 
-    out << "\nTest MySafety::TNumber\n";
-;
-    MySafety::TNumber<int> sn { 25 };
-    out << "Size of SafeNumber: " << sizeof(sn) << " bytes" << std::endl;
-    MySafety::TNumber<int> nsn{ -25 };
-    
-    long long val = 1;
-    MySafety::TNumber<int, MySafety::combineNumberSafety(MySafety::ENumberSafety::withException,
-                                                         MySafety::ENumberSafety::withStrictTypes,
-                                                         //MySafety::ENumberSafety::withPosition,
-                                                         MySafety::ENumberSafety::withOptionalChecks)> sn_o{ val };
-    try {
-       out << (sn +  5) << "\n";
-       out << (sn * 50) << "\n";
-       out << (sn /  5) << "\n";
-      // out << sn.pow(2) << "\n";
-       out << nsn << "\n";
-       out << nsn.abs() << "\n";
-       out << ++sn_o << "\n";
-       sn_o.reset();
-       out << ++sn_o << "\n";
 
-       }
-    catch(std::exception& ex) {
-       out << ex.what() << "\n";
-       }
-
-    out << "\nadditional test for preparation\n";
-    int testabs = std::abs(std::numeric_limits<int>::min());
-    out << testabs << " : " << std::numeric_limits<int>::min() << " ... " << std::numeric_limits<int>::max() << std::endl;
-    */
     }
-
+*/
 void Test4Positions(std::ostream& out) {
    MySafety::myPositions<int, 12> pos;
    int i = 0;

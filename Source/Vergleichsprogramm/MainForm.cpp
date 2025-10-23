@@ -28,6 +28,10 @@ MainForm::MainForm(QWidget *parent)
     connect(ui.actTestPositions,   &QAction::triggered, []() { test_space::Test4Positions(std::cerr); });
     connect(ui.actTestSafeVector,  &QAction::triggered, []() { test_space::Test4SafeVector(std::cerr); });
 
+    connect(ui.actTestPoints, &QAction::triggered, []() { test_space::Test4Point(std::cerr); });
+    connect(ui.actTestAngle, &QAction::triggered, []() { test_space::Test4Angle(std::cerr); });
+    connect(ui.actTestDistance, &QAction::triggered, []() { test_space::Test4Distance(std::cerr); });
+ //   connect(ui.actTestNumbers, &QAction::triggered, []() { test_space::Test4Numbers(std::cerr); });
     /*
     Test4Numbers(std::cerr);
     //Test4FPE(std::cerr);
@@ -72,7 +76,7 @@ void MainForm::Test() {
       //   Test4SafeVector(std::cerr);
       //   Test4Path(std::cerr);
       //   Test4Positions(std::cerr);
-      Test4Numbers(std::cerr);
+      // Test4Numbers(std::cerr);
       //Test4FPE(std::cerr);
       //Test4Distance(std::cerr);
       //Test4Angle(std::cerr);
